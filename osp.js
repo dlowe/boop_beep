@@ -29,6 +29,11 @@
         platforms[x][0] = 1;
         platforms[x][bheight-1] = 1; // XXX: remove me?
     }
+    for (var y = 4; y < (bheight - 4); y += Math.floor(Math.random() * 3 + 4)) {
+        for (var x = 1; x < bwidth - 1; ++x) {
+            platforms[x][y] = (Math.random() > 0.6) ? 1 : 0;
+        }
+    }
 
     var ctx = c.getContext("2d");
 
@@ -40,18 +45,18 @@
 
     var frameno = 0;
     var player_x = 100;
-    var player_y = 100;
+    var player_y = SPRITE_HEIGHT * (bheight - 2);
     var xspeed = 0;
     var yspeed = 0;
     var ACCELERATION = 0.05;
     var AIR_ACCELERATION = 0.1;
     var DECELERATION = 0.5;
     var FRICTION = 0.05;
-    var TOP_SPEED = 6;
+    var TOP_SPEED = 6; // setting to > SPRITE_WIDTH would be bad ;)
     var JUMP = -6.5;
-    var UNJUMP = -4.0;
+    var UNJUMP = -3.0;
     var GRAVITY = 0.2;
-    var TERMINAL_VELOCITY = 9;
+    var TERMINAL_VELOCITY = 9; // setting to > SPRITE_HEIGHT would be bad ;)
     var press_left = false;
     var press_right = false;
     var press_jump = false;
