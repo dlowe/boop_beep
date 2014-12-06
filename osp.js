@@ -1,6 +1,6 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 768;
+    var HEIGHT = 268;
     var EDGE_WIDTH = 12;
     var EDGE_HEIGHT = 8;
     var SPRITE_HEIGHT = 14;
@@ -19,7 +19,7 @@
     var platforms = []
     for (var x = 0; x < bwidth; ++x) {
         platforms[x] = [];
-        for (var y = 0; y < bheight; ++y) {
+        for (var y = 0; y < bheight + 10; ++y) { // the +10 is a hack so the player can fall off-screen
             platforms[x][y] = {
                 'p': false,
                 'despawn_frame': null,
@@ -52,10 +52,6 @@
     var meter = new FPSMeter();
 
     var frameno = 0;
-    var player_x = 100;
-    var player_y = SPRITE_HEIGHT * (bheight - 1) - PLAYER_HEIGHT;
-    var xspeed = 0;
-    var yspeed = 0;
     var ACCELERATION = 0.05;
     var AIR_ACCELERATION = 0.1;
     var DECELERATION = 0.5;
@@ -69,98 +65,138 @@
     var press_right = false;
     var press_jump = false;
     var unpress_jump = false;
+    var player = {
+        'x': 0,
+        'y': 0,
+        'xspeed': 0,
+        'yspeed': 0,
+        'dead': true,
+        'respawn_frame': 0,
+    };
 
     var left_bx = function (x) { return Math.floor(x / SPRITE_WIDTH); };
     var right_bx = function (x) { return Math.floor((x + PLAYER_WIDTH - 1) / SPRITE_WIDTH); };
     var top_by = function (y) { return Math.floor(y / SPRITE_HEIGHT); };
     var bottom_by = function (y) { return Math.floor((y + PLAYER_HEIGHT - 1) / SPRITE_HEIGHT); };
 
-    var update = function () {
-        ++frameno;
-
-        var in_the_air = (! (platforms[left_bx(player_x)][bottom_by(player_y+1)].p || platforms[right_bx(player_x)][bottom_by(player_y+1)].p));
-
-        // left-right physics
-        current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
-        if (press_left) {
-            if (xspeed > 0) {
-                xspeed -= DECELERATION;
-            } else if (xspeed >= (-TOP_SPEED + current_acceleration)) {
-                xspeed = xspeed - current_acceleration;
-            } else {
-                xspeed = -TOP_SPEED;
-            }
-        } else if (press_right) {
-            if (xspeed < 0) {
-                xspeed += DECELERATION;
-            } else if (xspeed <= (TOP_SPEED - current_acceleration)) {
-                xspeed = xspeed + current_acceleration;
-            } else {
-                xspeed = TOP_SPEED;
-            }
-        } else {
-            if (xspeed > 0) {
-                xspeed = Math.max(0, xspeed - FRICTION);
-            } else if (xspeed < 0) {
-                xspeed = Math.min(0, xspeed + FRICTION);
-            }
-        }
-
-        // up-down physics
-        if ((! in_the_air) && (press_jump)) {
-            press_jump = false;
-            yspeed = JUMP;
-        }
-        if (unpress_jump) {
-            unpress_jump = false;
-            if (yspeed < UNJUMP) {
-                yspeed = UNJUMP;
-            }
-        }
-        if (in_the_air) {
-            yspeed = Math.min(TERMINAL_VELOCITY, yspeed + GRAVITY);
-        }
-
-        // collisions
-        var new_player_x = player_x + xspeed;
-        var new_player_y = player_y + yspeed;
-        if (yspeed > 0) {
-            if ((platforms[left_bx(player_x)][bottom_by(new_player_y)].p) || (platforms[right_bx(player_x)][bottom_by(new_player_y)].p)) {
-                //console.log("bottom bump!");
-                yspeed = 0;
-                new_player_y = SPRITE_HEIGHT * bottom_by(new_player_y) - PLAYER_HEIGHT;
-            }
-        } else if (yspeed < 0) {
-            if ((platforms[left_bx(player_x)][top_by(new_player_y)].p) || (platforms[right_bx(player_x)][top_by(new_player_y)].p)) {
-                //console.log("top bump!");
-                yspeed = 0;
-                new_player_y = SPRITE_HEIGHT * (top_by(new_player_y) + 1);
-            }
-        }
-        if (xspeed > 0) {
-            if ((platforms[right_bx(new_player_x)][top_by(player_y)].p) || (platforms[right_bx(new_player_x)][bottom_by(player_y)].p)) {
-                //console.log("right bump!");
-                xspeed = 0;
-                new_player_x = SPRITE_WIDTH * right_bx(new_player_x) - PLAYER_WIDTH;
-            }
-        } else if (xspeed < 0) {
-            if ((platforms[left_bx(new_player_x)][top_by(player_y)].p) || (platforms[left_bx(new_player_x)][bottom_by(player_y)].p)) {
-                //console.log("left bump!");
-                xspeed = 0;
-                new_player_x = SPRITE_WIDTH * (left_bx(new_player_x) + 1);
-            }
-        }
-
-        player_x = new_player_x;
-        player_y = new_player_y;
-
-        // despawn blocks
+    var maybe_despawn_platforms = function () {
         for (var x = 0; x < bwidth; ++x) {
             for (var y = 0; y < bheight; ++y) {
                 if (platforms[x][y].despawn_frame && (platforms[x][y].despawn_frame <= frameno)) {
                    platforms[x][y].p = false;
                 }
             }
+        }
+    }
+
+    var maybe_respawn_player = function () {
+        if (player.respawn_frame <= frameno) {
+            player.dead = false;
+            player.respawn_frame = 0;
+            player.xspeed = 0;
+            player.yspeed = 0;
+            do {
+                player.x = SPRITE_WIDTH * (Math.floor(Math.random() * bwidth));
+                player.y = SPRITE_HEIGHT * (Math.floor(Math.random() * bheight));
+            } while ((platforms[left_bx(player.x)][top_by(player.y)].p) || (! platforms[left_bx(player.x)][top_by(player.y)+1].p));
+            console.log("RESPAWN AT " + player.x + ", " + player.y);
+        }
+    }
+
+    var move_player = function () {
+        // are we falling?
+        var in_the_air = (! (platforms[left_bx(player.x)][bottom_by(player.y+1)].p || platforms[right_bx(player.x)][bottom_by(player.y+1)].p));
+
+        // left-right physics
+        current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
+        if (press_left) {
+            if (player.xspeed > 0) {
+                player.xspeed -= DECELERATION;
+            } else if (player.xspeed >= (-TOP_SPEED + current_acceleration)) {
+                player.xspeed = player.xspeed - current_acceleration;
+            } else {
+                player.xspeed = -TOP_SPEED;
+            }
+        } else if (press_right) {
+            if (player.xspeed < 0) {
+                player.xspeed += DECELERATION;
+            } else if (player.xspeed <= (TOP_SPEED - current_acceleration)) {
+                player.xspeed = player.xspeed + current_acceleration;
+            } else {
+                player.xspeed = TOP_SPEED;
+            }
+        } else {
+            if (player.xspeed > 0) {
+                player.xspeed = Math.max(0, player.xspeed - FRICTION);
+            } else if (player.xspeed < 0) {
+                player.xspeed = Math.min(0, player.xspeed + FRICTION);
+            }
+        }
+
+        // up-down physics
+        if ((! in_the_air) && (press_jump)) {
+            press_jump = false;
+            player.yspeed = JUMP;
+        }
+        if (unpress_jump) {
+            unpress_jump = false;
+            if (player.yspeed < UNJUMP) {
+                player.yspeed = UNJUMP;
+            }
+        }
+        if (in_the_air) {
+            player.yspeed = Math.min(TERMINAL_VELOCITY, player.yspeed + GRAVITY);
+        }
+
+        // collisions & falling death
+        var new_player_x = player.x + player.xspeed;
+        var new_player_y = player.y + player.yspeed;
+        if ((player.yspeed > 0) && (bottom_by(new_player_y) == bheight + 2)) {
+            console.log("DEAD");
+            player.dead = true;
+            player.respawn_frame = frameno + 20;
+        } else {
+            if (player.yspeed > 0) {
+                if ((platforms[left_bx(player.x)][bottom_by(new_player_y)].p) || (platforms[right_bx(player.x)][bottom_by(new_player_y)].p)) {
+                    //console.log("bottom bump!");
+                    player.yspeed = 0;
+                    new_player_y = SPRITE_HEIGHT * bottom_by(new_player_y) - PLAYER_HEIGHT;
+                }
+            } else if (player.yspeed < 0) {
+                if ((platforms[left_bx(player.x)][top_by(new_player_y)].p) || (platforms[right_bx(player.x)][top_by(new_player_y)].p)) {
+                    //console.log("top bump!");
+                    player.yspeed = 0;
+                    new_player_y = SPRITE_HEIGHT * (top_by(new_player_y) + 1);
+                }
+            }
+            if (player.xspeed > 0) {
+                if ((platforms[right_bx(new_player_x)][top_by(player.y)].p) || (platforms[right_bx(new_player_x)][bottom_by(player.y)].p)) {
+                    //console.log("right bump!");
+                    player.xspeed = 0;
+                    new_player_x = SPRITE_WIDTH * right_bx(new_player_x) - PLAYER_WIDTH;
+                }
+            } else if (player.xspeed < 0) {
+                if ((platforms[left_bx(new_player_x)][top_by(player.y)].p) || (platforms[left_bx(new_player_x)][bottom_by(player.y)].p)) {
+                    //console.log("left bump!");
+                    player.xspeed = 0;
+                    new_player_x = SPRITE_WIDTH * (left_bx(new_player_x) + 1);
+                }
+            }
+
+            // apply motion
+            player.x = new_player_x;
+            player.y = new_player_y;
+        }
+    };
+
+    var update = function () {
+        ++frameno;
+        maybe_despawn_platforms();
+        console.log(player.dead);
+        if (player.dead) {
+            maybe_respawn_player();
+        } else {
+            move_player();
         }
     };
 
@@ -223,12 +259,12 @@
 
         ctx.fillStyle = "#000000";
         ctx.fillText(frameno, 30, 30);
-        ctx.fillText(xspeed, 30, 40);
-        ctx.fillText(yspeed, 30, 50);
-        ctx.fillText("(" + player_x + ", " + player_y + ")", 30, 60);
-        ctx.fillText("(" + left_bx(player_x) + ", " + top_by(player_y) + ")", 30, 70);
+        ctx.fillText(player.xspeed, 30, 40);
+        ctx.fillText(player.yspeed, 30, 50);
+        ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
+        ctx.fillText("(" + left_bx(player.x) + ", " + top_by(player.y) + ")", 30, 70);
         ctx.fillStyle = "#00FF00";
-        ctx.fillRect(player_x + offset_left, player_y + offset_top, PLAYER_WIDTH, PLAYER_HEIGHT);
+        ctx.fillRect(player.x + offset_left, player.y + offset_top, PLAYER_WIDTH, PLAYER_HEIGHT);
     };
     var frame = function () {
         meter.tickStart();
