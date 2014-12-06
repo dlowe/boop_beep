@@ -1,6 +1,6 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 268;
+    var HEIGHT = 768;
     var EDGE_WIDTH = 12;
     var EDGE_HEIGHT = 8;
     var SPRITE_HEIGHT = 14;
@@ -29,7 +29,7 @@
     for (var x = 0; x < bwidth; ++x) {
         platforms[x][0].p = true;
         platforms[x][bheight-1].p = true;
-        platforms[x][bheight-1].despawn_frame = 150;
+        platforms[x][bheight-1].despawn_frame = Math.floor((Math.random() * 10000) + 2000);
     }
     for (var y = 0; y < bheight; ++y) {
         platforms[0][y].p = true;
@@ -40,6 +40,7 @@
     for (var y = 4; y < (bheight - 4); y += Math.floor(Math.random() * 3 + 4)) {
         for (var x = 1; x < bwidth - 1; ++x) {
             platforms[x][y].p = (Math.random() > 0.6) ? true : false;
+            platforms[x][y].despawn_frame = Math.floor((Math.random() * 10000) + 500);
         }
     }
 
