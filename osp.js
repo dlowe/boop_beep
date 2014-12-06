@@ -29,7 +29,7 @@
     for (var x = 0; x < bwidth; ++x) {
         platforms[x][0].p = true;
         platforms[x][bheight-1].p = true;
-        platforms[x][bheight-1].despawn_frame = Math.floor((Math.random() * 10000) + 2000);
+        platforms[x][bheight-1].despawn_frame = Math.floor((Math.random() * 9000) + 1000);
     }
     for (var y = 0; y < bheight; ++y) {
         platforms[0][y].p = true;
@@ -37,11 +37,33 @@
         platforms[bwidth-1][y].p = true;
         platforms[bwidth-1][y].despawn_frame = null;
     }
-    for (var y = 4; y < (bheight - 4); y += Math.floor(Math.random() * 3 + 4)) {
-        for (var x = 1; x < bwidth - 1; ++x) {
-            platforms[x][y].p = (Math.random() > 0.6) ? true : false;
-            platforms[x][y].despawn_frame = Math.floor((Math.random() * 10000) + 500);
+
+    var clear = function (x, y, len) {
+        for (dx = 0; dx < len; ++dx) {
+            if (platforms[x+dx][y].p) {
+                return false;
+            }
         }
+        return true;
+    }
+    var add_platform = function (f) {
+        var len = Math.floor(Math.random() * 10) + 1;
+        var despawn = f + Math.floor((Math.random() * 9000) + 500);
+        var x;
+        var y;
+        do {
+            x = Math.floor(Math.random() * (bwidth - len));
+            y = Math.floor(Math.random() * bheight);
+        } while (! clear(x, y, len));
+        console.log("add platform: " + x + ", " + y + " -> " + len);
+        for (dx = 0; dx < len; ++dx) {
+            platforms[x+dx][y].p = 1;
+            platforms[x+dx][y].despawn_frame = despawn;
+        }
+    }
+
+    for (var i = 0; i < 30; ++i) {
+        add_platform(0);
     }
 
     var ctx = c.getContext("2d");
@@ -50,9 +72,10 @@
 
     var delta = 0;
     var last = window.performance.now();
-    var meter = new FPSMeter();
+    //var meter = new FPSMeter();
 
     var frameno = 0;
+    var SPAWN_CHANCE = 0.004;
     var ACCELERATION = 0.05;
     var AIR_ACCELERATION = 0.1;
     var DECELERATION = 0.5;
@@ -89,6 +112,11 @@
             }
         }
     }
+    var maybe_spawn_platforms = function () {
+        if (Math.random() < SPAWN_CHANCE) {
+            add_platform(frameno);
+        }
+    }
 
     var maybe_respawn_player = function () {
         if (player.respawn_frame <= frameno) {
@@ -100,7 +128,6 @@
                 player.x = SPRITE_WIDTH * (Math.floor(Math.random() * bwidth));
                 player.y = SPRITE_HEIGHT * (Math.floor(Math.random() * bheight));
             } while ((platforms[left_bx(player.x)][top_by(player.y)].p) || (! platforms[left_bx(player.x)][top_by(player.y)+1].p));
-            console.log("RESPAWN AT " + player.x + ", " + player.y);
         }
     }
 
@@ -153,7 +180,6 @@
         var new_player_x = player.x + player.xspeed;
         var new_player_y = player.y + player.yspeed;
         if ((player.yspeed > 0) && (bottom_by(new_player_y) == bheight + 2)) {
-            console.log("DEAD");
             player.dead = true;
             player.respawn_frame = frameno + 20;
         } else {
@@ -193,7 +219,7 @@
     var update = function () {
         ++frameno;
         maybe_despawn_platforms();
-        console.log(player.dead);
+        maybe_spawn_platforms();
         if (player.dead) {
             maybe_respawn_player();
         } else {
@@ -258,17 +284,17 @@
             }
         }
 
-        ctx.fillStyle = "#000000";
-        ctx.fillText(frameno, 30, 30);
-        ctx.fillText(player.xspeed, 30, 40);
-        ctx.fillText(player.yspeed, 30, 50);
-        ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
-        ctx.fillText("(" + left_bx(player.x) + ", " + top_by(player.y) + ")", 30, 70);
+        //ctx.fillStyle = "#000000";
+        //ctx.fillText(frameno, 30, 30);
+        //ctx.fillText(player.xspeed, 30, 40);
+        //ctx.fillText(player.yspeed, 30, 50);
+        //ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
+        //ctx.fillText("(" + left_bx(player.x) + ", " + top_by(player.y) + ")", 30, 70);
         ctx.fillStyle = "#00FF00";
         ctx.fillRect(player.x + offset_left, player.y + offset_top, PLAYER_WIDTH, PLAYER_HEIGHT);
     };
     var frame = function () {
-        meter.tickStart();
+        //meter.tickStart();
         now = window.performance.now();
         delta = delta + Math.min(1, (now - last) / 1000);
         while (delta > STEP) {
@@ -277,7 +303,7 @@
         }
         render();
         last = now;
-        meter.tick();
+        //meter.tick();
         requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
