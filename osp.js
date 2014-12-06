@@ -1,6 +1,6 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 768;
+    var HEIGHT = 368;
     var EDGE_WIDTH = 12;
     var EDGE_HEIGHT = 8;
     var SPRITE_HEIGHT = 14;
@@ -36,6 +36,11 @@
     }
 
     var collides = function(o1, o2) {
+        if ((o1.moving_platform_id != null) &&
+            (o2.moving_platform_id != null) &&
+            (o1.moving_platform_id == o2.moving_platform_id)) {
+            return false;
+        }
         if ((o1.x < (o2.x + o2.width)) &&
             ((o1.x + o1.width) > o2.x) &&
             (o1.y < (o2.y + o2.height)) &&
@@ -64,21 +69,53 @@
         }
         return true;
     }
-    var add_platform = function (f) {
-        var len = Math.floor(Math.random() * 10) + 1;
-        var despawn = f + Math.floor((Math.random() * 9000) + 500);
+    var legal_platform = function(len, despawn) {
         var bx;
         var by;
         do {
             bx = Math.floor(Math.random() * (bwidth - len));
             by = Math.floor(Math.random() * bheight);
         } while (! clear(bx, by, len));
-        console.log("add platform: " + bx + ", " + by + " -> " + len);
-        for (dx = 0; dx < len; ++dx) {
-            platforms.push(new_platform(bx+dx, by, despawn));
+        new_platforms = [];
+        for (var dx = 0; dx < len; ++dx) {
+            new_platforms.push(new_platform(bx+dx, by, despawn));
         }
+        return new_platforms;
+    };
+    var add_platform = function (f) {
+        var len = Math.floor(Math.random() * 10) + 1;
+        var despawn = f + Math.floor((Math.random() * 9000) + 500);
+        platforms = platforms.concat(legal_platform(len, despawn));
+    };
+    var moving_platforms = [];
+    var add_moving_platform = function (f) {
+        var vertical = (Math.random() < 0.5) ? true : false;
+        var horizontal = ! vertical;
+        var backwards = (Math.random() < 0.5) ? true : false;
+        var speed = (Math.random() * 1.5) + 0.25;
+        var moving_platform = {
+                'id': f,
+                'dx': (backwards ? -1 : 1) * (horizontal ? 1 : 0) * speed,
+                'dy': (backwards ? -1 : 1) * (vertical ? 1 : 0) * speed
+        };
+        var len = Math.floor(Math.random() * 10) + 1;
+        var despawn = f + Math.floor((Math.random() * 9000) + 500);
+        new_platforms = legal_platform(len, despawn);
+        console.log(new_platforms);
+        for (var i = 0; i < new_platforms.length; ++i) {
+            new_platforms[i].moving_platform_id = moving_platform.id;
+        }
+        //console.log(new_platforms);
+        platforms = platforms.concat(new_platforms);
+        //console.log(platforms);
+        moving_platforms.push(moving_platform);
+        //console.log(moving_platforms);
+        //console.log(platforms.filter(function(p) { return (p.moving_platform_id == moving_platform.id) }));
     }
 
+    for (var i = -5; i < 0; ++i) {
+        add_moving_platform(i);
+    }
     for (var i = 0; i < 30; ++i) {
         add_platform(0);
     }
@@ -124,25 +161,30 @@
 
     var maybe_despawn_platforms = function () {
         platforms = platforms.filter(function(p) {
-                return ((! p.despawn_frame) || (p.despawn_frame > frameno));
+            return ((! p.despawn_frame) || (p.despawn_frame > frameno));
         });
     }
     var maybe_spawn_platforms = function () {
         if (Math.random() < SPAWN_CHANCE) {
-            add_platform(frameno);
+            if (Math.random() < 0.2) {
+                add_moving_platform(frameno);
+            } else {
+                add_platform(frameno);
+            }
         }
     };
 
-    var new_player_at = function(player, new_x, new_y) {
+    var new_obj_at = function(obj, new_x, new_y) {
         return {
             'x': new_x,
             'y': new_y,
-            'height': player.height,
-            'width': player.width,
+            'height': obj.height,
+            'width': obj.width,
+            'moving_platform_id': obj.moving_platform_id
         };
     };
     var under_feet = function(player) {
-        return new_player_at(player, player.x, player.y+1);
+        return new_obj_at(player, player.x, player.y+1);
     };
     var maybe_respawn_player = function () {
         console.log("RESPAWN");
@@ -215,26 +257,26 @@
             player.respawn_frame = frameno + 20;
         } else {
             if (player.yspeed > 0) {
-                while (collides_with_platforms(new_player_at(player, player.x, new_player_y))) {
+                while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
                     console.log("bottom bump!");
                     player.yspeed = 0;
                     --new_player_y;
                 }
             } else if (player.yspeed < 0) {
-                while (collides_with_platforms(new_player_at(player, player.x, new_player_y))) {
+                while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
                     console.log("top bump!");
                     player.yspeed = 0;
                     ++new_player_y;
                 }
             }
             if (player.xspeed > 0) {
-                while (collides_with_platforms(new_player_at(player, new_player_x, player.y))) {
+                while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
                     console.log("right bump!");
                     player.xspeed = 0;
                     --new_player_x;
                 }
             } else if (player.xspeed < 0) {
-                while (collides_with_platforms(new_player_at(player, new_player_x, player.y))) {
+                while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
                     console.log("left bump!");
                     player.xspeed = 0;
                     ++new_player_x;
@@ -246,9 +288,52 @@
             player.y = new_player_y;
         }
     };
+    var move_platforms = function() {
+        for (var i = 0; i < moving_platforms.length; ++i) {
+            var mp = moving_platforms[i];
+            var collision = false;
+            // check for bounce
+            for (var j = 0; j < platforms.length; ++j) {
+                if (platforms[j].moving_platform_id == mp.id) {
+                    if (collides_with_platforms(new_obj_at(platforms[j], platforms[j].x + mp.dx, platforms[j].y + mp.dy))) {
+                        mp.dx *= -1;
+                        mp.dy *= -1;
+                        collision = true;
+                        break;
+                    }
+                }
+            }
+            if (collision) {
+                continue;
+            }
+            // check for player
+            var move_player = false;
+            var pfeet = under_feet(player);
+            for (var j = 0; j < platforms.length; ++j) {
+                if (platforms[j].moving_platform_id == mp.id) {
+                    if (collides(pfeet, platforms[j])) {
+                        move_player = true;
+                        break;
+                    }
+                }
+            }
+            if (move_player) {
+                player.x += mp.dx;
+                player.y += mp.dy;
+            }
+            // apply motion
+            for (var j = 0; j < platforms.length; ++j) {
+                if (platforms[j].moving_platform_id == mp.id) {
+                    platforms[j].x += mp.dx;
+                    platforms[j].y += mp.dy;
+                }
+            }
+        }
+    };
 
     var update = function () {
         ++frameno;
+        move_platforms();
         maybe_despawn_platforms();
         maybe_spawn_platforms();
         if (player.dead) {
