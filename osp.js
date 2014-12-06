@@ -16,31 +16,49 @@
     var offset_left = (WIDTH - (SPRITE_WIDTH * bwidth)) / 2;
     var offset_top = HEIGHT - (SPRITE_HEIGHT * bheight);
 
-    var platforms = []
-    for (var x = 0; x < bwidth; ++x) {
-        platforms[x] = [];
-        for (var y = 0; y < bheight + 10; ++y) { // the +10 is a hack so the player can fall off-screen
-            platforms[x][y] = {
-                'p': false,
-                'despawn_frame': null,
-            };
-        }
+    var platforms = [];
+    var new_platform = function(bx, by, despawn_frame) {
+        return {
+            'x': bx * SPRITE_WIDTH,
+            'y': by * SPRITE_HEIGHT,
+            'height': SPRITE_HEIGHT,
+            'width': SPRITE_WIDTH,
+            'despawn_frame': despawn_frame
+        };
+    };
+    for (var bx = 0; bx < bwidth; ++bx) {
+        platforms.push(new_platform(bx, 0, null));
+        platforms.push(new_platform(bx, bheight - 1, Math.floor((Math.random() * 9000) + 1000)));
     }
-    for (var x = 0; x < bwidth; ++x) {
-        platforms[x][0].p = true;
-        platforms[x][bheight-1].p = true;
-        platforms[x][bheight-1].despawn_frame = Math.floor((Math.random() * 9000) + 1000);
-    }
-    for (var y = 0; y < bheight; ++y) {
-        platforms[0][y].p = true;
-        platforms[0][y].despawn_frame = null;
-        platforms[bwidth-1][y].p = true;
-        platforms[bwidth-1][y].despawn_frame = null;
+    for (var by = 0; by < bheight; ++by) {
+        platforms.push(new_platform(0, by, null));
+        platforms.push(new_platform(bwidth - 1, by, null));
     }
 
-    var clear = function (x, y, len) {
+    var collides = function(o1, o2) {
+        if ((o1.x < (o2.x + o2.width)) &&
+            ((o1.x + o1.width) > o2.x) &&
+            (o1.y < (o2.y + o2.height)) &&
+            ((o1.y + o1.height) > o2.y)) {
+            return true;
+        }
+        return false;
+    }
+    var collides_with_platforms = function(obj) {
+        for (var i = 0; i < platforms.length; ++i) {
+            // console.log("checking for collision with platform: (" + platforms[i].x + ", " + platforms[i].y + ")");
+            if (collides(obj, platforms[i])) {
+                // console.log("bump");
+                return true;
+            }
+        }
+        // console.log("no bump");
+        return false;
+    }
+
+    var clear = function (bx, by, len) {
         for (dx = 0; dx < len; ++dx) {
-            if (platforms[x+dx][y].p) {
+            if (collides_with_platforms(new_platform(bx+dx, by, null))) {
                 return false;
             }
         }
@@ -49,16 +67,15 @@
     var add_platform = function (f) {
         var len = Math.floor(Math.random() * 10) + 1;
         var despawn = f + Math.floor((Math.random() * 9000) + 500);
-        var x;
-        var y;
+        var bx;
+        var by;
         do {
-            x = Math.floor(Math.random() * (bwidth - len));
-            y = Math.floor(Math.random() * bheight);
-        } while (! clear(x, y, len));
-        console.log("add platform: " + x + ", " + y + " -> " + len);
+            bx = Math.floor(Math.random() * (bwidth - len));
+            by = Math.floor(Math.random() * bheight);
+        } while (! clear(bx, by, len));
+        console.log("add platform: " + bx + ", " + by + " -> " + len);
         for (dx = 0; dx < len; ++dx) {
-            platforms[x+dx][y].p = 1;
-            platforms[x+dx][y].despawn_frame = despawn;
+            platforms.push(new_platform(bx+dx, by, despawn));
         }
     }
 
@@ -79,7 +96,7 @@
     var ACCELERATION = 0.05;
     var AIR_ACCELERATION = 0.1;
     var DECELERATION = 0.5;
-    var FRICTION = 0.05;
+    var FRICTION = 0.15;
     var TOP_SPEED = 6; // setting to > SPRITE_WIDTH would be bad ;)
     var JUMP = -6.5;
     var UNJUMP = -3.0;
@@ -92,6 +109,8 @@
     var player = {
         'x': 0,
         'y': 0,
+        'height': PLAYER_HEIGHT,
+        'width': PLAYER_WIDTH,
         'xspeed': 0,
         'yspeed': 0,
         'dead': true,
@@ -104,36 +123,48 @@
     var bottom_by = function (y) { return Math.floor((y + PLAYER_HEIGHT - 1) / SPRITE_HEIGHT); };
 
     var maybe_despawn_platforms = function () {
-        for (var x = 0; x < bwidth; ++x) {
-            for (var y = 0; y < bheight; ++y) {
-                if (platforms[x][y].despawn_frame && (platforms[x][y].despawn_frame <= frameno)) {
-                   platforms[x][y].p = false;
-                }
-            }
-        }
+        platforms = platforms.filter(function(p) {
+                return ((! p.despawn_frame) || (p.despawn_frame > frameno));
+        });
     }
     var maybe_spawn_platforms = function () {
         if (Math.random() < SPAWN_CHANCE) {
             add_platform(frameno);
         }
-    }
+    };
 
+    var new_player_at = function(player, new_x, new_y) {
+        return {
+            'x': new_x,
+            'y': new_y,
+            'height': player.height,
+            'width': player.width,
+        };
+    };
+    var under_feet = function(player) {
+        return new_player_at(player, player.x, player.y+1);
+    };
     var maybe_respawn_player = function () {
+        console.log("RESPAWN");
         if (player.respawn_frame <= frameno) {
             player.dead = false;
             player.respawn_frame = 0;
             player.xspeed = 0;
             player.yspeed = 0;
             do {
-                player.x = SPRITE_WIDTH * (Math.floor(Math.random() * bwidth));
-                player.y = SPRITE_HEIGHT * (Math.floor(Math.random() * bheight));
-            } while ((platforms[left_bx(player.x)][top_by(player.y)].p) || (! platforms[left_bx(player.x)][top_by(player.y)+1].p));
+                platform = platforms[Math.floor(Math.random() * platforms.length)];
+                player.x = platform.x;
+                player.y = platform.y - player.height;
+                console.log("trying: (" + player.x + ", " + player.y + ")");
+            } while ((player.y < 0) || collides_with_platforms(player) || (! collides_with_platforms(under_feet(player))));
         }
+        console.log("RESPAWN DONE!");
     }
 
     var move_player = function () {
         // are we falling?
-        var in_the_air = (! (platforms[left_bx(player.x)][bottom_by(player.y+1)].p || platforms[right_bx(player.x)][bottom_by(player.y+1)].p));
+        var in_the_air = (! collides_with_platforms(under_feet(player)));
+        //console.log(in_the_air);
 
         // left-right physics
         current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
@@ -179,34 +210,34 @@
         // collisions & falling death
         var new_player_x = player.x + player.xspeed;
         var new_player_y = player.y + player.yspeed;
-        if ((player.yspeed > 0) && (bottom_by(new_player_y) == bheight + 2)) {
+        if ((player.yspeed > 0) && (new_player_y >= HEIGHT + player.height)) {
             player.dead = true;
             player.respawn_frame = frameno + 20;
         } else {
             if (player.yspeed > 0) {
-                if ((platforms[left_bx(player.x)][bottom_by(new_player_y)].p) || (platforms[right_bx(player.x)][bottom_by(new_player_y)].p)) {
-                    //console.log("bottom bump!");
+                while (collides_with_platforms(new_player_at(player, player.x, new_player_y))) {
+                    console.log("bottom bump!");
                     player.yspeed = 0;
-                    new_player_y = SPRITE_HEIGHT * bottom_by(new_player_y) - PLAYER_HEIGHT;
+                    --new_player_y;
                 }
             } else if (player.yspeed < 0) {
-                if ((platforms[left_bx(player.x)][top_by(new_player_y)].p) || (platforms[right_bx(player.x)][top_by(new_player_y)].p)) {
-                    //console.log("top bump!");
+                while (collides_with_platforms(new_player_at(player, player.x, new_player_y))) {
+                    console.log("top bump!");
                     player.yspeed = 0;
-                    new_player_y = SPRITE_HEIGHT * (top_by(new_player_y) + 1);
+                    ++new_player_y;
                 }
             }
             if (player.xspeed > 0) {
-                if ((platforms[right_bx(new_player_x)][top_by(player.y)].p) || (platforms[right_bx(new_player_x)][bottom_by(player.y)].p)) {
-                    //console.log("right bump!");
+                while (collides_with_platforms(new_player_at(player, new_player_x, player.y))) {
+                    console.log("right bump!");
                     player.xspeed = 0;
-                    new_player_x = SPRITE_WIDTH * right_bx(new_player_x) - PLAYER_WIDTH;
+                    --new_player_x;
                 }
             } else if (player.xspeed < 0) {
-                if ((platforms[left_bx(new_player_x)][top_by(player.y)].p) || (platforms[left_bx(new_player_x)][bottom_by(player.y)].p)) {
-                    //console.log("left bump!");
+                while (collides_with_platforms(new_player_at(player, new_player_x, player.y))) {
+                    console.log("left bump!");
                     player.xspeed = 0;
-                    new_player_x = SPRITE_WIDTH * (left_bx(new_player_x) + 1);
+                    ++new_player_x;
                 }
             }
 
@@ -273,15 +304,9 @@
     var render = function () {
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
-        for (var x = 0; x < bwidth; ++x) {
-            for (var y = 0; y < bheight; ++y) {
-                if (platforms[x][y].p) {
-                    ctx.fillStyle = "#FF0000";
-                    ctx.fillRect((SPRITE_WIDTH * x) + offset_left,
-                                 (SPRITE_HEIGHT * y) + offset_top,
-                                 SPRITE_HEIGHT, SPRITE_WIDTH);
-                }
-            }
+        for (var i = 0; i < platforms.length; ++i) {
+            ctx.fillStyle = "#FF0000";
+            ctx.fillRect(platforms[i].x + offset_left, platforms[i].y + offset_top, platforms[i].width, platforms[i].height);
         }
 
         //ctx.fillStyle = "#000000";
@@ -291,7 +316,7 @@
         //ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
         //ctx.fillText("(" + left_bx(player.x) + ", " + top_by(player.y) + ")", 30, 70);
         ctx.fillStyle = "#00FF00";
-        ctx.fillRect(player.x + offset_left, player.y + offset_top, PLAYER_WIDTH, PLAYER_HEIGHT);
+        ctx.fillRect(player.x + offset_left, player.y + offset_top, player.width, player.height);
     };
     var frame = function () {
         //meter.tickStart();
