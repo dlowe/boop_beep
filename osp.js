@@ -8,13 +8,28 @@
 
     c.width = WIDTH;
     c.height = HEIGHT;
+
+    var bwidth = Math.floor(WIDTH / SPRITE_WIDTH) + 1;
+    var bheight = Math.floor(HEIGHT / SPRITE_HEIGHT) + 1;
+    var offset_left = (WIDTH - (SPRITE_WIDTH * bwidth)) / 2;
+    var offset_top = HEIGHT - (SPRITE_HEIGHT * bheight);
+
+    var platforms = []
+    for (var x = 0; x < bwidth; ++x) {
+        platforms[x] = [];
+        for (var y = 0; y < bheight; ++y) {
+            platforms[x][y] = 0;
+        }
+    }
+    for (var y = 0; y < bheight; ++y) {
+        platforms[0][y] = 1;
+        platforms[bwidth-1][y] = 1;
+    }
+    for (var x = 0; x < bwidth; ++x) {
+        platforms[x][0] = 1;
+    }
+
     var ctx = c.getContext("2d");
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(0, 0, WIDTH, EDGE_HEIGHT);
-    ctx.fillRect(0, 0, EDGE_WIDTH, HEIGHT);
-    ctx.fillRect(WIDTH - EDGE_WIDTH, 0, WIDTH, HEIGHT);
 
     var STEP = 1/60;
 
@@ -102,15 +117,18 @@
             case 37:
             case 65:
                 press_left = true;
+                return false;
                 break;
             case 39:
             case 68:
                 press_right = true;
+                return false;
                 break;
             case 38:
             case 32:
                 unpress_jump = false;
                 press_jump = true;
+                return false;
                 break;
         };
     };
@@ -119,15 +137,18 @@
             case 37:
             case 65:
                 press_left = false;
+                return false;
                 break;
             case 39:
             case 68:
                 press_right = false;
+                return false;
                 break;
             case 38:
             case 32:
                 unpress_jump = true;
                 press_jump = false;
+                return false;
                 break;
         };
     };
@@ -136,7 +157,18 @@
 
     var render = function () {
         ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0 + EDGE_WIDTH, 0 + EDGE_HEIGHT, WIDTH - (2 * EDGE_WIDTH), HEIGHT - EDGE_HEIGHT);
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        for (var x = 0; x < bwidth; ++x) {
+            for (var y = 0; y < bheight; ++y) {
+                if (platforms[x][y]) {
+                    ctx.fillStyle = "#FF0000";
+                    ctx.fillRect((SPRITE_WIDTH * x) + offset_left,
+                                 (SPRITE_HEIGHT * y) + offset_top,
+                                 SPRITE_HEIGHT, SPRITE_WIDTH);
+                }
+            }
+        }
+
         ctx.fillStyle = "#000000";
         ctx.fillText(x, 30, 30);
         ctx.fillText(xspeed, 30, 40);
