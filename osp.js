@@ -27,6 +27,7 @@
     }
     for (var x = 0; x < bwidth; ++x) {
         platforms[x][0] = 1;
+        platforms[x][bheight-1] = 1; // XXX: remove me?
     }
 
     var ctx = c.getContext("2d");
@@ -37,6 +38,7 @@
     var last = window.performance.now();
     var meter = new FPSMeter();
 
+    var frameno = 0;
     var player_x = 100;
     var player_y = 100;
     var xspeed = 0;
@@ -49,16 +51,21 @@
     var JUMP = -6.5;
     var UNJUMP = -4.0;
     var GRAVITY = 0.2;
-    var TERMINAL_VELOCITY = 16;
+    var TERMINAL_VELOCITY = 9;
     var press_left = false;
     var press_right = false;
     var press_jump = false;
     var unpress_jump = false;
-    var in_the_air = false;
 
-    var x = 0;
+    var left_bx = function (x) { return Math.floor(x / SPRITE_WIDTH); };
+    var right_bx = function (x) { return Math.floor((x + SPRITE_WIDTH - 1) / SPRITE_WIDTH); };
+    var top_by = function (y) { return Math.floor(y / SPRITE_HEIGHT); };
+    var bottom_by = function (y) { return Math.floor((y + SPRITE_HEIGHT - 1) / SPRITE_HEIGHT); };
+
     var update = function () {
-        ++x;
+        ++frameno;
+
+        var in_the_air = (! (platforms[left_bx(player_x)][bottom_by(player_y+1)] || platforms[right_bx(player_x)][bottom_by(player_y+1)]));
 
         // left-right physics
         current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
@@ -90,7 +97,6 @@
         if ((! in_the_air) && (press_jump)) {
             press_jump = false;
             yspeed = JUMP;
-            in_the_air = true; // XXX: WRONG!
         }
         if (unpress_jump) {
             unpress_jump = false;
@@ -100,16 +106,40 @@
         }
         if (in_the_air) {
             yspeed = Math.min(TERMINAL_VELOCITY, yspeed + GRAVITY);
-            if (player_y > 1000) {
-                // XXX: WRONG!
-                in_the_air = false;
-                player_y = 100;
+        }
+
+        // collisions
+        var new_player_x = player_x + xspeed;
+        var new_player_y = player_y + yspeed;
+        if (yspeed > 0) {
+            if ((platforms[left_bx(player_x)][bottom_by(new_player_y)]) || (platforms[right_bx(player_x)][bottom_by(new_player_y)])) {
+                //console.log("bottom bump!");
                 yspeed = 0;
+                new_player_y = SPRITE_HEIGHT * (bottom_by(new_player_y) - 1);
+            }
+        } else if (yspeed < 0) {
+            if ((platforms[left_bx(player_x)][top_by(new_player_y)]) || (platforms[right_bx(player_x)][top_by(new_player_y)])) {
+                //console.log("top bump!");
+                yspeed = 0;
+                new_player_y = SPRITE_HEIGHT * (top_by(new_player_y) + 1);
+            }
+        }
+        if (xspeed > 0) {
+            if ((platforms[right_bx(new_player_x)][top_by(player_y)]) || (platforms[right_bx(new_player_x)][bottom_by(player_y)])) {
+                //console.log("right bump!");
+                xspeed = 0;
+                new_player_x = SPRITE_WIDTH * (right_bx(new_player_x) - 1);
+            }
+        } else if (xspeed < 0) {
+            if ((platforms[left_bx(new_player_x)][top_by(player_y)]) || (platforms[left_bx(new_player_x)][bottom_by(player_y)])) {
+                //console.log("left bump!");
+                xspeed = 0;
+                new_player_x = SPRITE_WIDTH * (left_bx(new_player_x) + 1);
             }
         }
 
-        player_x = player_x + xspeed;
-        player_y = player_y + yspeed;
+        player_x = new_player_x;
+        player_y = new_player_y;
     };
 
     var keydown = function (e) {
@@ -170,11 +200,13 @@
         }
 
         ctx.fillStyle = "#000000";
-        ctx.fillText(x, 30, 30);
+        ctx.fillText(frameno, 30, 30);
         ctx.fillText(xspeed, 30, 40);
         ctx.fillText(yspeed, 30, 50);
+        ctx.fillText("(" + player_x + ", " + player_y + ")", 30, 60);
+        ctx.fillText("(" + left_bx(player_x) + ", " + top_by(player_y) + ")", 30, 70);
         ctx.fillStyle = "#00FF00";
-        ctx.fillRect(player_x, player_y, SPRITE_HEIGHT, SPRITE_WIDTH);
+        ctx.fillRect(player_x + offset_left, player_y + offset_top, SPRITE_HEIGHT, SPRITE_WIDTH);
     };
     var frame = function () {
         meter.tickStart();
