@@ -20,20 +20,26 @@
     for (var x = 0; x < bwidth; ++x) {
         platforms[x] = [];
         for (var y = 0; y < bheight; ++y) {
-            platforms[x][y] = 0;
+            platforms[x][y] = {
+                'p': false,
+                'despawn_frame': null,
+            };
         }
     }
-    for (var y = 0; y < bheight; ++y) {
-        platforms[0][y] = 1;
-        platforms[bwidth-1][y] = 1;
-    }
     for (var x = 0; x < bwidth; ++x) {
-        platforms[x][0] = 1;
-        platforms[x][bheight-1] = 1; // XXX: remove me?
+        platforms[x][0].p = true;
+        platforms[x][bheight-1].p = true;
+        platforms[x][bheight-1].despawn_frame = 150;
+    }
+    for (var y = 0; y < bheight; ++y) {
+        platforms[0][y].p = true;
+        platforms[0][y].despawn_frame = null;
+        platforms[bwidth-1][y].p = true;
+        platforms[bwidth-1][y].despawn_frame = null;
     }
     for (var y = 4; y < (bheight - 4); y += Math.floor(Math.random() * 3 + 4)) {
         for (var x = 1; x < bwidth - 1; ++x) {
-            platforms[x][y] = (Math.random() > 0.6) ? 1 : 0;
+            platforms[x][y].p = (Math.random() > 0.6) ? true : false;
         }
     }
 
@@ -72,7 +78,7 @@
     var update = function () {
         ++frameno;
 
-        var in_the_air = (! (platforms[left_bx(player_x)][bottom_by(player_y+1)] || platforms[right_bx(player_x)][bottom_by(player_y+1)]));
+        var in_the_air = (! (platforms[left_bx(player_x)][bottom_by(player_y+1)].p || platforms[right_bx(player_x)][bottom_by(player_y+1)].p));
 
         // left-right physics
         current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
@@ -119,26 +125,26 @@
         var new_player_x = player_x + xspeed;
         var new_player_y = player_y + yspeed;
         if (yspeed > 0) {
-            if ((platforms[left_bx(player_x)][bottom_by(new_player_y)]) || (platforms[right_bx(player_x)][bottom_by(new_player_y)])) {
+            if ((platforms[left_bx(player_x)][bottom_by(new_player_y)].p) || (platforms[right_bx(player_x)][bottom_by(new_player_y)].p)) {
                 //console.log("bottom bump!");
                 yspeed = 0;
                 new_player_y = SPRITE_HEIGHT * bottom_by(new_player_y) - PLAYER_HEIGHT;
             }
         } else if (yspeed < 0) {
-            if ((platforms[left_bx(player_x)][top_by(new_player_y)]) || (platforms[right_bx(player_x)][top_by(new_player_y)])) {
+            if ((platforms[left_bx(player_x)][top_by(new_player_y)].p) || (platforms[right_bx(player_x)][top_by(new_player_y)].p)) {
                 //console.log("top bump!");
                 yspeed = 0;
                 new_player_y = SPRITE_HEIGHT * (top_by(new_player_y) + 1);
             }
         }
         if (xspeed > 0) {
-            if ((platforms[right_bx(new_player_x)][top_by(player_y)]) || (platforms[right_bx(new_player_x)][bottom_by(player_y)])) {
+            if ((platforms[right_bx(new_player_x)][top_by(player_y)].p) || (platforms[right_bx(new_player_x)][bottom_by(player_y)].p)) {
                 //console.log("right bump!");
                 xspeed = 0;
                 new_player_x = SPRITE_WIDTH * right_bx(new_player_x) - PLAYER_WIDTH;
             }
         } else if (xspeed < 0) {
-            if ((platforms[left_bx(new_player_x)][top_by(player_y)]) || (platforms[left_bx(new_player_x)][bottom_by(player_y)])) {
+            if ((platforms[left_bx(new_player_x)][top_by(player_y)].p) || (platforms[left_bx(new_player_x)][bottom_by(player_y)].p)) {
                 //console.log("left bump!");
                 xspeed = 0;
                 new_player_x = SPRITE_WIDTH * (left_bx(new_player_x) + 1);
@@ -147,6 +153,15 @@
 
         player_x = new_player_x;
         player_y = new_player_y;
+
+        // despawn blocks
+        for (var x = 0; x < bwidth; ++x) {
+            for (var y = 0; y < bheight; ++y) {
+                if (platforms[x][y].despawn_frame && (platforms[x][y].despawn_frame <= frameno)) {
+                   platforms[x][y].p = false;
+                }
+            }
+        }
     };
 
     var keydown = function (e) {
@@ -197,7 +212,7 @@
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
         for (var x = 0; x < bwidth; ++x) {
             for (var y = 0; y < bheight; ++y) {
-                if (platforms[x][y]) {
+                if (platforms[x][y].p) {
                     ctx.fillStyle = "#FF0000";
                     ctx.fillRect((SPRITE_WIDTH * x) + offset_left,
                                  (SPRITE_HEIGHT * y) + offset_top,
