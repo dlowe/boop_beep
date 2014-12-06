@@ -3,8 +3,10 @@
     var HEIGHT = 768;
     var EDGE_WIDTH = 12;
     var EDGE_HEIGHT = 8;
-    var SPRITE_HEIGHT = 10;
-    var SPRITE_WIDTH = 10;
+    var SPRITE_HEIGHT = 14;
+    var SPRITE_WIDTH = 14;
+    var PLAYER_HEIGHT = 12;
+    var PLAYER_WIDTH = 10;
 
     c.width = WIDTH;
     c.height = HEIGHT;
@@ -45,7 +47,7 @@
 
     var frameno = 0;
     var player_x = 100;
-    var player_y = SPRITE_HEIGHT * (bheight - 2);
+    var player_y = SPRITE_HEIGHT * (bheight - 1) - PLAYER_HEIGHT;
     var xspeed = 0;
     var yspeed = 0;
     var ACCELERATION = 0.05;
@@ -63,9 +65,9 @@
     var unpress_jump = false;
 
     var left_bx = function (x) { return Math.floor(x / SPRITE_WIDTH); };
-    var right_bx = function (x) { return Math.floor((x + SPRITE_WIDTH - 1) / SPRITE_WIDTH); };
+    var right_bx = function (x) { return Math.floor((x + PLAYER_WIDTH - 1) / SPRITE_WIDTH); };
     var top_by = function (y) { return Math.floor(y / SPRITE_HEIGHT); };
-    var bottom_by = function (y) { return Math.floor((y + SPRITE_HEIGHT - 1) / SPRITE_HEIGHT); };
+    var bottom_by = function (y) { return Math.floor((y + PLAYER_HEIGHT - 1) / SPRITE_HEIGHT); };
 
     var update = function () {
         ++frameno;
@@ -120,7 +122,7 @@
             if ((platforms[left_bx(player_x)][bottom_by(new_player_y)]) || (platforms[right_bx(player_x)][bottom_by(new_player_y)])) {
                 //console.log("bottom bump!");
                 yspeed = 0;
-                new_player_y = SPRITE_HEIGHT * (bottom_by(new_player_y) - 1);
+                new_player_y = SPRITE_HEIGHT * bottom_by(new_player_y) - PLAYER_HEIGHT;
             }
         } else if (yspeed < 0) {
             if ((platforms[left_bx(player_x)][top_by(new_player_y)]) || (platforms[right_bx(player_x)][top_by(new_player_y)])) {
@@ -133,7 +135,7 @@
             if ((platforms[right_bx(new_player_x)][top_by(player_y)]) || (platforms[right_bx(new_player_x)][bottom_by(player_y)])) {
                 //console.log("right bump!");
                 xspeed = 0;
-                new_player_x = SPRITE_WIDTH * (right_bx(new_player_x) - 1);
+                new_player_x = SPRITE_WIDTH * right_bx(new_player_x) - PLAYER_WIDTH;
             }
         } else if (xspeed < 0) {
             if ((platforms[left_bx(new_player_x)][top_by(player_y)]) || (platforms[left_bx(new_player_x)][bottom_by(player_y)])) {
@@ -211,7 +213,7 @@
         ctx.fillText("(" + player_x + ", " + player_y + ")", 30, 60);
         ctx.fillText("(" + left_bx(player_x) + ", " + top_by(player_y) + ")", 30, 70);
         ctx.fillStyle = "#00FF00";
-        ctx.fillRect(player_x + offset_left, player_y + offset_top, SPRITE_HEIGHT, SPRITE_WIDTH);
+        ctx.fillRect(player_x + offset_left, player_y + offset_top, PLAYER_WIDTH, PLAYER_HEIGHT);
     };
     var frame = function () {
         meter.tickStart();
