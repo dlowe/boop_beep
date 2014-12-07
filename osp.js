@@ -305,6 +305,12 @@
     };
     var move_player = function() {
         move(player);
+        for (var mi = 0; mi < monsters.length; ++mi) {
+            if (collides(player, monsters[mi])) {
+                player.dead = true;
+                player.respawn_frame = frameno + 20;
+            }
+        }
     };
 
     var new_dork = function() {
