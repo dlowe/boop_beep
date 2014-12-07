@@ -1,28 +1,24 @@
 (function osp (c) {
     var WIDTH = 1024;
     var HEIGHT = 368;
-    var EDGE_WIDTH = 12;
-    var EDGE_HEIGHT = 8;
-    var SPRITE_HEIGHT = 14;
-    var SPRITE_WIDTH = 14;
-    var PLAYER_HEIGHT = 12;
-    var PLAYER_WIDTH = 10;
+    var BLOCK_HEIGHT = 14;
+    var BLOCK_WIDTH = 14;
 
     c.width = WIDTH;
     c.height = HEIGHT;
 
-    var bwidth = Math.floor(WIDTH / SPRITE_WIDTH) + 1;
-    var bheight = Math.floor(HEIGHT / SPRITE_HEIGHT) + 1;
-    var offset_left = (WIDTH - (SPRITE_WIDTH * bwidth)) / 2;
-    var offset_top = HEIGHT - (SPRITE_HEIGHT * bheight);
+    var bwidth = Math.floor(WIDTH / BLOCK_WIDTH) + 1;
+    var bheight = Math.floor(HEIGHT / BLOCK_HEIGHT) + 1;
+    var offset_left = (WIDTH - (BLOCK_WIDTH * bwidth)) / 2;
+    var offset_top = HEIGHT - (BLOCK_HEIGHT * bheight);
 
     var platforms = [];
     var new_platform = function(bx, by, despawn_frame) {
         return {
-            'x': bx * SPRITE_WIDTH,
-            'y': by * SPRITE_HEIGHT,
-            'height': SPRITE_HEIGHT,
-            'width': SPRITE_WIDTH,
+            'x': bx * BLOCK_WIDTH,
+            'y': by * BLOCK_HEIGHT,
+            'height': BLOCK_HEIGHT,
+            'width': BLOCK_WIDTH,
             'despawn_frame': despawn_frame
         };
     };
@@ -39,8 +35,8 @@
         'x': 0,
         'y': 0,
         'facing': 1,
-        'height': PLAYER_HEIGHT,
-        'width': PLAYER_WIDTH,
+        'height': 12,
+        'width': 10,
         'xspeed': 0,
         'yspeed': 0,
         'dead': true,
@@ -126,7 +122,6 @@
         //console.log(platforms);
         moving_platforms.push(moving_platform);
         //console.log(moving_platforms);
-        //console.log(platforms.filter(function(p) { return (p.moving_platform_id == moving_platform.id) }));
     }
 
     for (var i = -5; i < 0; ++i) {
@@ -136,12 +131,6 @@
         add_platform(0);
     }
 
-    var ctx = c.getContext("2d");
-
-    var STEP = 1/60;
-
-    var delta = 0;
-    var last = window.performance.now();
     //var meter = new FPSMeter();
 
     var frameno = 0;
@@ -150,21 +139,16 @@
     var AIR_ACCELERATION = 0.1;
     var DECELERATION = 0.5;
     var FRICTION = 0.15;
-    var TOP_SPEED = 6; // setting to > SPRITE_WIDTH would be bad ;)
+    var TOP_SPEED = 6; // setting to > BLOCK_WIDTH would be bad ;)
     var JUMP = -6.5;
     var UNJUMP = -3.0;
     var GRAVITY = 0.2;
-    var TERMINAL_VELOCITY = 9; // setting to > SPRITE_HEIGHT would be bad ;)
+    var TERMINAL_VELOCITY = 9; // setting to > BLOCK_HEIGHT would be bad ;)
     var press_left = false;
     var press_right = false;
     var press_jump = false;
     var unpress_jump = false;
     var press_shoot = false;
-
-    var left_bx = function (x) { return Math.floor(x / SPRITE_WIDTH); };
-    var right_bx = function (x) { return Math.floor((x + PLAYER_WIDTH - 1) / SPRITE_WIDTH); };
-    var top_by = function (y) { return Math.floor(y / SPRITE_HEIGHT); };
-    var bottom_by = function (y) { return Math.floor((y + PLAYER_HEIGHT - 1) / SPRITE_HEIGHT); };
 
     var maybe_despawn_platforms = function () {
         platforms = platforms.filter(function(p) {
@@ -479,6 +463,7 @@
     $(document).keydown(keydown);
     $(document).keyup(keyup);
 
+    var ctx = c.getContext("2d");
     var render = function () {
         // clear
         ctx.fillStyle = "#FFFFFF";
@@ -505,7 +490,6 @@
         //ctx.fillText(player.xspeed, 30, 40);
         //ctx.fillText(player.yspeed, 30, 50);
         //ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
-        //ctx.fillText("(" + left_bx(player.x) + ", " + top_by(player.y) + ")", 30, 70);
         ctx.fillStyle = "#000000";
         ctx.font = "14px Impact";
         ctx.fillText("DEATHS: " + player.death_counter, WIDTH - 68, 16);
@@ -516,6 +500,9 @@
             ctx.fillRect(player.x + offset_left, player.y + offset_top, player.width, player.height);
         }
     };
+    var STEP = 1/60;
+    var delta = 0;
+    var last = window.performance.now();
     var frame = function () {
         //meter.tickStart();
         now = window.performance.now();
