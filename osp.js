@@ -668,7 +668,7 @@
         }
         for (var i = 0; i < projectiles.length; ++i) {
             if (! projectiles[i].remove) {
-                if (collides(projectiles[i], player)) {
+                if ((! player.dead) && (collides(projectiles[i], player))) {
                     player.kill(player);
                 }
                 for (var mi = 0; mi < monsters.length; ++mi) {
