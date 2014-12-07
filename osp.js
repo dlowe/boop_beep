@@ -1,6 +1,6 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 768;
+    var HEIGHT = 368;
     var EDGE_WIDTH = 12;
     var EDGE_HEIGHT = 8;
     var SPRITE_HEIGHT = 14;
@@ -260,48 +260,50 @@
         var new_player_x = player.x + player.xspeed;
         var new_player_y = player.y + player.yspeed;
         if (new_player_y >= HEIGHT + player.height) {
-            // fell out of the world
+            console.log("fell out of the world");
             player.dead = true;
             player.respawn_frame = frameno + 20;
             return;
         }
         if (collides_with_platforms(player)) {
-            // squished
+            console.log("squished");
             player.dead = true;
             player.respawn_frame = frameno + 20;
             return;
         }
 
-        if (player.yspeed > 0) {
-            while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
-                // console.log("bottom bump!");
-                player.yspeed = 0;
-                --new_player_y;
+        do { // janky loop works around a bug with corner collisions
+            if (player.yspeed > 0) {
+                while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
+                    // console.log("bottom bump!");
+                    player.yspeed = 0;
+                    --new_player_y;
+                }
+            } else if (player.yspeed < 0) {
+                while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
+                    // console.log("top bump!");
+                    player.yspeed = 0;
+                    ++new_player_y;
+                }
             }
-        } else if (player.yspeed < 0) {
-            while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
-                // console.log("top bump!");
-                player.yspeed = 0;
-                ++new_player_y;
+            if (player.xspeed > 0) {
+                while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
+                    // console.log("right bump!");
+                    player.xspeed = 0;
+                    --new_player_x;
+                }
+            } else if (player.xspeed < 0) {
+                while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
+                    // console.log("left bump!");
+                    player.xspeed = 0;
+                    ++new_player_x;
+                }
             }
-        }
-        if (player.xspeed > 0) {
-            while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
-                // console.log("right bump!");
-                player.xspeed = 0;
-                --new_player_x;
-            }
-        } else if (player.xspeed < 0) {
-            while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
-                // console.log("left bump!");
-                player.xspeed = 0;
-                ++new_player_x;
-            }
-        }
 
-        // apply motion
-        player.x = new_player_x;
-        player.y = new_player_y;
+            // apply motion
+            player.x = new_player_x;
+            player.y = new_player_y;
+        } while (collides_with_platforms(player));
     };
     var move_platforms = function() {
         for (var i = 0; i < moving_platforms.length; ++i) {
@@ -322,17 +324,17 @@
                 continue;
             }
             // check for player
-            var move_player = false;
+            var slide_player = false;
             var pfeet = under_feet(player);
             for (var j = 0; j < platforms.length; ++j) {
                 if (platforms[j].moving_platform_id == mp.id) {
                     if (collides(pfeet, platforms[j])) {
-                        move_player = true;
+                        slide_player = true;
                         break;
                     }
                 }
             }
-            if (move_player) {
+            if (slide_player) {
                 new_player_x = player.x + mp.dx;
                 new_player_y = player.y + mp.dy;
                 if (! collides_with_platforms(new_obj_at(player, new_player_x, new_player_y, mp.id))) {
@@ -345,6 +347,30 @@
                 if (platforms[j].moving_platform_id == mp.id) {
                     platforms[j].x += mp.dx;
                     platforms[j].y += mp.dy;
+
+                    // shove the player if necessary
+                    if (mp.dy > 0) {
+                        while (collides(platforms[j], player)) {
+                            //console.log("adjust down!");
+                            ++player.y;
+                        }
+                    } else if (mp.dy < 0) {
+                        while (collides(platforms[j], player)) {
+                            //console.log("adjust up!");
+                            --player.y;
+                        }
+                    }
+                    if (mp.dx > 0) {
+                        while (collides(platforms[j], player)) {
+                            //console.log("adjust right!");
+                            ++player.x;
+                        }
+                    } else if (mp.dx < 0) {
+                        while (collides(platforms[j], player)) {
+                            //console.log("adjust left!");
+                            --player.x;
+                        }
+                    }
                 }
             }
         }
