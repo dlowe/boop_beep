@@ -344,7 +344,8 @@
             'height': 8,
             'width': 8,
             'dead': false,
-            'ai': dork_ai
+            'ai': dork_ai,
+            'health': 1,
         };
     };
     var goomba_ai = function(obj) {
@@ -378,7 +379,8 @@
             'ai': goomba_ai,
             'top_speed': 1,
             'acceleration': 0.02,
-            'air_acceleration': 0.02
+            'air_acceleration': 0.02,
+            'health': 2,
         };
     };
     var paragoomba_ai = function(obj) {
@@ -398,7 +400,8 @@
             'ai': paragoomba_ai,
             'top_speed': 1,
             'acceleration': 0.02,
-            'air_acceleration': 0.02
+            'air_acceleration': 0.02,
+            'health': 2,
         };
     };
     var boss_ai = function(obj) {
@@ -418,7 +421,8 @@
             'ai': boss_ai,
             'top_speed': 1,
             'acceleration': 0.02,
-            'air_acceleration': 0.02
+            'air_acceleration': 0.02,
+            'health': 15
         };
     };
 
@@ -503,9 +507,15 @@
         }
         for (var i = 0; i < projectiles.length; ++i) {
             for (var mi = 0; mi < monsters.length; ++mi) {
-                if (collides(projectiles[i], monsters[mi])) {
-                    monsters[mi].dead = true;
+                if ((! projectiles[i].remove) && (collides(projectiles[i], monsters[mi]))) {
+                    // TODO: event: hit!
+                    console.log("hit frameno=" + frameno + ", mi=" + mi + ", i=" + i + ".... health=" + monsters[mi].health);
+                    --monsters[mi].health;
                     projectiles[i].remove = true;
+                    if (monsters[mi].health <= 0) {
+                        // TODO: event: kill!
+                        monsters[mi].dead = true;
+                    }
                 }
             }
         }
@@ -601,8 +611,8 @@
         ++frameno;
         move_platforms();
         move_projectiles();
-        maybe_win_the_game();
         move_monsters();
+        maybe_win_the_game();
         maybe_despawn_platforms();
         maybe_despawn_monsters();
         maybe_despawn_collectibles();
