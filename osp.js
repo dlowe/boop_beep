@@ -1,6 +1,6 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 768;
+    var HEIGHT = 468;
     var BLOCK_HEIGHT = 14;
     var BLOCK_WIDTH = 14;
 
@@ -81,7 +81,6 @@
     }
     var collides_with_platforms = function(obj) {
         for (var i = 0; i < platforms.length; ++i) {
-            // console.log("checking for collision with platform: (" + platforms[i].x + ", " + platforms[i].y + ")");
             if (collides(obj, platforms[i])) {
                 // console.log("bump");
                 return true;
@@ -150,10 +149,10 @@
         //console.log(moving_platforms);
     }
 
-    for (var i = -5; i < 0; ++i) {
+    for (var i = -10; i < 0; ++i) {
         add_moving_platform(i);
     }
-    for (var i = 0; i < 30; ++i) {
+    for (var i = 0; i < 20; ++i) {
         add_platform(0);
     }
 
@@ -271,7 +270,7 @@
                 obj.yspeed = UNJUMP;
             }
         }
-        if (in_the_air) {
+        if ((in_the_air) && (! obj.flying)) {
             obj.yspeed = Math.min(TERMINAL_VELOCITY, obj.yspeed + GRAVITY);
         }
 
@@ -441,6 +440,11 @@
     }
     var boss_ai = function(obj) {
         goomba_ai(obj);
+        if (obj.y > 150) {
+            obj.yspeed = (Math.random() * 0.75) - 1.5;
+        } else {
+            obj.yspeed = (Math.random() * 0.5) - 0.1;
+        }
         if (obj.next_rage <= frameno) {
             boss_rage(obj);
             obj.next_rage = frameno + 500;
@@ -458,7 +462,7 @@
             'dead': false,
             'direction': (Math.random() < 0.5) ? 1 : 0,
             'ai': boss_ai,
-            'top_speed': 1,
+            'top_speed': 5,
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'health': 15,
@@ -466,8 +470,24 @@
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 2000, 60, "#FF00FF");
                 m.dead = true;
             },
-            'squish': boss_rage,
+            'squish': function(m) {
+                boss_rage(m);
+                if (collides_with_platforms(m)) {
+                    console.log("adjusting boss");
+                    if (m.x < (WIDTH / 2)) {
+                        ++m.x;
+                    } else {
+                        --m.x;
+                    }
+                    if (m.y < (HEIGHT / 2)) {
+                        ++m.y;
+                    } else {
+                        --m.y;
+                    }
+                }
+            },
             'next_rage': frameno,
+            'flying': true,
         };
     };
 
