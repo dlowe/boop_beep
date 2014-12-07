@@ -1,6 +1,6 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 368;
+    var HEIGHT = 768;
     var BLOCK_HEIGHT = 14;
     var BLOCK_WIDTH = 14;
 
@@ -309,6 +309,7 @@
         move(player);
         for (var mi = 0; mi < monsters.length; ++mi) {
             if (collides(player, monsters[mi])) {
+                ++obj.death_counter;
                 player.dead = true;
                 player.respawn_frame = frameno + 20;
             }
