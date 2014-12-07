@@ -575,8 +575,8 @@
         return {
             'x': 0,
             'y': 0,
-            'height': 5,
-            'width': 5,
+            'height': 8,
+            'width': 8,
             'gone': false
         };
     };
