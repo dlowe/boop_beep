@@ -1,8 +1,16 @@
 (function osp (c) {
     var WIDTH = 1024;
-    var HEIGHT = 468;
+    var HEIGHT = 768;
     var BLOCK_HEIGHT = 14;
     var BLOCK_WIDTH = 14;
+
+    var sounds = {
+        "bg": new Audio("drums.mp3"),
+    };
+
+    sounds["bg"].load();
+    sounds["bg"].loop = true;
+    sounds["bg"].play();
 
     c.width = WIDTH;
     c.height = HEIGHT;
@@ -445,9 +453,17 @@
         } else {
             obj.yspeed = (Math.random() * 0.5) - 0.1;
         }
+        if (obj.health < obj.last_health) {
+            obj.next_rage -= 500;
+        }
+        obj.last_health = obj.health;
         if (obj.next_rage <= frameno) {
             boss_rage(obj);
-            obj.next_rage = frameno + 500;
+            obj.next_rage = frameno + 500 - Math.floor(Math.random() * 50);
+        }
+        if (obj.cooldown_frame <= frameno) {
+            projectiles.push(new_projectile(obj.x + obj.width / 2, obj.y + obj.height, 0, 6.5));
+            obj.cooldown_frame = frameno + 5;
         }
     };
     var new_boss = function() {
@@ -465,7 +481,9 @@
             'top_speed': 5,
             'acceleration': 0.02,
             'air_acceleration': 0.02,
+            'last_health': 15,
             'health': 15,
+            'cooldown_frame': 0,
             'kill': function(m) {
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 2000, 60, "#FF00FF");
                 m.dead = true;
@@ -584,11 +602,12 @@
         });
     };
 
-    var new_projectile = function(x, y, dx) {
+    var new_projectile = function(x, y, dx, dy) {
         return {
             'x': x,
             'y': y,
             'dx': dx,
+            'dy': dy,
             'height': 3,
             'width': 5
         };
@@ -598,10 +617,10 @@
         if ((player.cooldown_frame <= frameno) && (player.press_shoot)) {
             if (player.facing == 1) {
                 make_particles(player.x + player.width, player.y + player.height / 2, 10, 5, "#FF00FF");
-                projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5));
+                projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5, 0));
             } else {
                 make_particles(player.x, player.y + player.height / 2, 10, 5, "#FF00FF");
-                projectiles.push(new_projectile(player.x, player.y + player.height / 2, -6.5));
+                projectiles.push(new_projectile(player.x, player.y + player.height / 2, -6.5, 0));
             }
             player.cooldown_frame = frameno + 15;
         }
@@ -609,17 +628,24 @@
     var move_projectiles = function() {
         for (var i = 0; i < projectiles.length; ++i) {
             projectiles[i].x += projectiles[i].dx;
+            projectiles[i].y += projectiles[i].dy;
         }
         for (var i = 0; i < projectiles.length; ++i) {
-            for (var mi = 0; mi < monsters.length; ++mi) {
-                if ((! projectiles[i].remove) && (collides(projectiles[i], monsters[mi]))) {
-                    // TODO: event: hit!
-                    console.log("hit frameno=" + frameno + ", mi=" + mi + ", i=" + i + ".... health=" + monsters[mi].health);
-                    --monsters[mi].health;
-                    projectiles[i].remove = true;
-                    if (monsters[mi].health <= 0) {
-                        // TODO: event: kill!
-                        monsters[mi].kill(monsters[mi]);
+            if (! projectiles[i].remove) {
+                if (collides(projectiles[i], player)) {
+                    // TODO: event: shot!
+                    player.kill(player);
+                }
+                for (var mi = 0; mi < monsters.length; ++mi) {
+                    if (collides(projectiles[i], monsters[mi])) {
+                        // TODO: event: hit!
+                        // console.log("hit frameno=" + frameno + ", mi=" + mi + ", i=" + i + ".... health=" + monsters[mi].health);
+                        --monsters[mi].health;
+                        projectiles[i].remove = true;
+                        if (monsters[mi].health <= 0) {
+                            // TODO: event: kill!
+                            monsters[mi].kill(monsters[mi]);
+                        }
                     }
                 }
             }
