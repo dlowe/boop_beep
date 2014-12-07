@@ -38,6 +38,7 @@
     var player = {
         'x': 0,
         'y': 0,
+        'facing': 1,
         'height': PLAYER_HEIGHT,
         'width': PLAYER_WIDTH,
         'xspeed': 0,
@@ -158,6 +159,7 @@
     var press_right = false;
     var press_jump = false;
     var unpress_jump = false;
+    var press_shoot = false;
 
     var left_bx = function (x) { return Math.floor(x / SPRITE_WIDTH); };
     var right_bx = function (x) { return Math.floor((x + PLAYER_WIDTH - 1) / SPRITE_WIDTH); };
@@ -201,6 +203,7 @@
             player.respawn_frame = 0;
             player.xspeed = 0;
             player.yspeed = 0;
+            player.facing = 1;
             do {
                 platform = platforms[Math.floor(Math.random() * platforms.length)];
                 player.x = platform.x;
@@ -219,6 +222,7 @@
         // left-right physics
         current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
         if (press_left) {
+            player.facing = -1;
             if (player.xspeed > 0) {
                 player.xspeed -= DECELERATION;
             } else if (player.xspeed >= (-TOP_SPEED + current_acceleration)) {
@@ -227,6 +231,7 @@
                 player.xspeed = -TOP_SPEED;
             }
         } else if (press_right) {
+            player.facing = 1;
             if (player.xspeed < 0) {
                 player.xspeed += DECELERATION;
             } else if (player.xspeed <= (TOP_SPEED - current_acceleration)) {
@@ -308,6 +313,34 @@
             player.y = new_player_y;
         } while (collides_with_platforms(player));
     };
+    var new_projectile = function(x, y, dx) {
+        return {
+            'x': x,
+            'y': y,
+            'dx': dx,
+            'height': 2,
+            'width': 2
+        };
+    };
+    var projectiles = [];
+    var shots_fired = function () {
+        if (press_shoot) {
+            if (player.facing == 1) {
+                projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5));
+            } else {
+                projectiles.push(new_projectile(player.x, player.y + player.height / 2, -6.5));
+            }
+            press_shoot = false;
+        }
+    };
+    var move_projectiles = function() {
+        for (var i = 0; i < projectiles.length; ++i) {
+            projectiles[i].x += projectiles[i].dx;
+        }
+        projectiles = projectiles.filter(function(p) {
+            return (! collides_with_platforms(p));
+        });
+    };
     var move_platforms = function() {
         for (var i = 0; i < moving_platforms.length; ++i) {
             var mp = moving_platforms[i];
@@ -382,12 +415,14 @@
     var update = function () {
         ++frameno;
         move_platforms();
+        move_projectiles();
         maybe_despawn_platforms();
         maybe_spawn_platforms();
         if (player.dead) {
             maybe_respawn_player();
         } else {
             move_player();
+            shots_fired();
         }
     };
 
@@ -407,6 +442,11 @@
             case 32:
                 unpress_jump = false;
                 press_jump = true;
+                return false;
+                break;
+            case 16:
+            case 88:
+                press_shoot = true;
                 return false;
                 break;
         };
@@ -429,14 +469,22 @@
                 press_jump = false;
                 return false;
                 break;
+            case 16:
+            case 88:
+                press_shoot = false;
+                return false;
+                break;
         };
     };
     $(document).keydown(keydown);
     $(document).keyup(keyup);
 
     var render = function () {
+        // clear
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        // render platforms
         for (var i = 0; i < platforms.length; ++i) {
             var saturation = 10;
             if (platforms[i].despawn_frame) {
@@ -444,6 +492,12 @@
             }
             ctx.fillStyle = "rgb(255, " + saturation + ", " + saturation + ")";
             ctx.fillRect(platforms[i].x + offset_left, platforms[i].y + offset_top, platforms[i].width, platforms[i].height);
+        }
+
+        // render projectiles
+        for (var i = 0; i < projectiles.length; ++i) {
+            ctx.fillStyle = "#0000FF";
+            ctx.fillRect(projectiles[i].x + offset_left, projectiles[i].y + offset_top, projectiles[i].width, projectiles[i].height);
         }
 
         //ctx.fillStyle = "#000000";
@@ -455,6 +509,8 @@
         ctx.fillStyle = "#000000";
         ctx.font = "14px Impact";
         ctx.fillText("DEATHS: " + player.death_counter, WIDTH - 68, 16);
+
+        // render player
         if (! player.dead) {
             ctx.fillStyle = "#00FF00";
             ctx.fillRect(player.x + offset_left, player.y + offset_top, player.width, player.height);
