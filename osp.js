@@ -52,6 +52,12 @@
         'air_acceleration': 0.1,
         'collectible_counter': 0,
         'cooldown_frame': 0,
+        'kill': function(p) {
+            p.dead = true;
+            ++p.death_counter;
+            p.respawn_frame = frameno + 20;
+            make_particles(p.x, p.y, 400, 15, "#00FF00");
+        }
     };
     var monsters = [];
 
@@ -270,16 +276,12 @@
         var new_y = obj.y + obj.yspeed;
         if (new_y >= HEIGHT + obj.height) {
             // console.log("fell out of the world");
-            ++obj.death_counter;
-            obj.dead = true;
-            obj.respawn_frame = frameno + 20;
+            obj.kill(obj);
             return;
         }
         if (collides_with_platforms(obj)) {
             // console.log("squished");
-            ++obj.death_counter;
-            obj.dead = true;
-            obj.respawn_frame = frameno + 20;
+            obj.kill(obj);
             return;
         }
 
@@ -321,9 +323,7 @@
         for (var mi = 0; mi < monsters.length; ++mi) {
             if (collides(player, monsters[mi])) {
                 // TODO: event: player died
-                ++player.death_counter;
-                player.dead = true;
-                player.respawn_frame = frameno + 20;
+                player.kill(player);
             }
         }
         for (var ci = 0; ci < collectibles.length; ++ci) {
@@ -347,6 +347,10 @@
             'dead': false,
             'ai': dork_ai,
             'health': 1,
+            'kill': function(m) {
+                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
+                m.dead = true;
+            },
         };
     };
     var goomba_ai = function(obj) {
@@ -382,6 +386,10 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'health': 2,
+            'kill': function(m) {
+                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
+                m.dead = true;
+            },
         };
     };
     var paragoomba_ai = function(obj) {
@@ -403,6 +411,10 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'health': 2,
+            'kill': function(m) {
+                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
+                m.dead = true;
+            },
         };
     };
     var boss_ai = function(obj) {
@@ -423,7 +435,11 @@
             'top_speed': 1,
             'acceleration': 0.02,
             'air_acceleration': 0.02,
-            'health': 15
+            'health': 15,
+            'kill': function(m) {
+                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 1000, 30, "#FF00FF");
+                m.dead = true;
+            },
         };
     };
 
@@ -482,21 +498,61 @@
         }
     };
 
+    var new_particle = function(x, y, dx, dy, duration, color) {
+        return {
+            'x': x,
+            'y': y,
+            'dx': dx,
+            'dy': dy,
+            'despawn_frame': frameno + duration,
+            'color': color,
+        };
+    };
+    var make_particles = function(x, y, n, duration, color) {
+        particles = particles.concat([
+            new_particle(x, y, 8, 0, duration, color),
+            new_particle(x, y, 4, 4, duration, color),
+            new_particle(x, y, 0, 8, duration, color),
+            new_particle(x, y, -4, 4, duration, color),
+            new_particle(x, y, 4, -4, duration, color),
+            new_particle(x, y, -8, 0, duration, color),
+            new_particle(x, y, -4, -4, duration, color),
+            new_particle(x, y, 0, -8, duration, color),
+        ]);
+        for (var i = 0; i < n; ++i) {
+            particles.push(new_particle(x, y, Math.random() * 16 - 8, Math.random() * 16 - 8, duration, color));
+        }
+    };
+    var particles = [];
+    var move_particles = function() {
+        for (var i = 0; i < particles.length; ++i) {
+            particles[i].x += particles[i].dx;
+            particles[i].y += particles[i].dy;
+        }
+    };
+    var maybe_despawn_particles = function() {
+        particles = particles.filter(function (p) {
+            return (p.despawn_frame > frameno);
+        });
+    };
+
     var new_projectile = function(x, y, dx) {
         return {
             'x': x,
             'y': y,
             'dx': dx,
-            'height': 2,
-            'width': 2
+            'height': 3,
+            'width': 5
         };
     };
     var projectiles = [];
     var shots_fired = function () {
         if ((player.cooldown_frame <= frameno) && (player.press_shoot)) {
             if (player.facing == 1) {
+                make_particles(player.x + player.width, player.y + player.height / 2, 10, 5, "#FF00FF");
                 projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5));
             } else {
+                make_particles(player.x, player.y + player.height / 2, 10, 5, "#FF00FF");
                 projectiles.push(new_projectile(player.x, player.y + player.height / 2, -6.5));
             }
             player.cooldown_frame = frameno + 15;
@@ -515,7 +571,7 @@
                     projectiles[i].remove = true;
                     if (monsters[mi].health <= 0) {
                         // TODO: event: kill!
-                        monsters[mi].dead = true;
+                        monsters[mi].kill(monsters[mi]);
                     }
                 }
             }
@@ -610,6 +666,7 @@
 
     var update = function () {
         ++frameno;
+        move_particles();
         move_platforms();
         move_projectiles();
         move_monsters();
@@ -617,6 +674,7 @@
         maybe_despawn_platforms();
         maybe_despawn_monsters();
         maybe_despawn_collectibles();
+        maybe_despawn_particles();
         maybe_spawn_platforms();
         if (player.dead) {
             maybe_respawn_player();
@@ -730,6 +788,12 @@
                 ctx.fillStyle = "#FF00FF";
                 ctx.fillRect(monsters[i].x + offset_left, monsters[i].y + offset_top, monsters[i].width, monsters[i].height);
             }
+        }
+
+        // render particles
+        for (var i = 0; i < particles.length; ++i) {
+            ctx.fillStyle = particles[i].color;
+            ctx.fillRect(particles[i].x + offset_left, particles[i].y + offset_top, 1, 1);
         }
 
         if (game_over) {
