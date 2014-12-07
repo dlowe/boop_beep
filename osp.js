@@ -256,14 +256,14 @@
         var new_x = obj.x + obj.xspeed;
         var new_y = obj.y + obj.yspeed;
         if (new_y >= HEIGHT + obj.height) {
-            console.log("fell out of the world");
+            // console.log("fell out of the world");
             ++obj.death_counter;
             obj.dead = true;
             obj.respawn_frame = frameno + 20;
             return;
         }
         if (collides_with_platforms(obj)) {
-            console.log("squished");
+            // console.log("squished");
             ++obj.death_counter;
             obj.dead = true;
             obj.respawn_frame = frameno + 20;
@@ -325,11 +325,8 @@
             platform = platforms[Math.floor(Math.random() * platforms.length)];
             dork.x = platform.x;
             dork.y = platform.y - dork.height;
-            // console.log(dork);
         } while ((dork.y < 0) || collides_with_platforms(dork) || (! collides_with_platforms(under_feet(dork))));
-        // console.log(dork);
         monsters.push(dork);
-        // console.log(monsters);
     };
 
     spawn_dork();
@@ -341,8 +338,6 @@
     spawn_dork();
     spawn_dork();
     spawn_dork();
-
-    // console.log(monsters);
 
     var move_monsters = function() {
         for (var i = 0; i < monsters.length; ++i) {
@@ -382,7 +377,6 @@
         for (var i = 0; i < projectiles.length; ++i) {
             for (var mi = 0; mi < monsters.length; ++mi) {
                 if (collides(projectiles[i], monsters[mi])) {
-                    console.log("SHOT!");
                     monsters[mi].dead = true;
                     projectiles[i].remove = true;
                 }
@@ -391,6 +385,50 @@
         projectiles = projectiles.filter(function(p) {
             return (! (p.remove || collides_with_platforms(p)));
         });
+    };
+    var maybe_slide = function(mp, obj) {
+        var slide_obj = false;
+        var feet = under_feet(obj);
+        for (var j = 0; j < platforms.length; ++j) {
+            if (platforms[j].moving_platform_id == mp.id) {
+                if (collides(feet, platforms[j])) {
+                    slide_obj = true;
+                    break;
+                }
+            }
+        }
+        if (slide_obj) {
+            new_x = obj.x + mp.dx;
+            new_y = obj.y + mp.dy;
+            if (! collides_with_platforms(new_obj_at(obj, new_x, new_y, mp.id))) {
+                obj.x = new_x;
+                obj.y = new_y;
+            }
+        }
+    };
+    var maybe_shove = function(shover, obj, dy, dx) {
+        if (dy > 0) {
+            while (collides(shover, obj)) {
+                //console.log("adjust down!");
+                ++obj.y;
+            }
+        } else if (dy < 0) {
+            while (collides(shover, obj)) {
+                //console.log("adjust up!");
+                --obj.y;
+            }
+        }
+        if (dx > 0) {
+            while (collides(shover, obj)) {
+                //console.log("adjust right!");
+                ++obj.x;
+            }
+        } else if (dx < 0) {
+            while (collides(shover, obj)) {
+                //console.log("adjust left!");
+                --obj.x;
+            }
+        }
     };
     var move_platforms = function() {
         for (var i = 0; i < moving_platforms.length; ++i) {
@@ -410,53 +448,22 @@
             if (collision) {
                 continue;
             }
-            // check for player
-            var slide_player = false;
-            var pfeet = under_feet(player);
-            for (var j = 0; j < platforms.length; ++j) {
-                if (platforms[j].moving_platform_id == mp.id) {
-                    if (collides(pfeet, platforms[j])) {
-                        slide_player = true;
-                        break;
-                    }
-                }
+            // slide things standing on the platform
+            maybe_slide(mp, player);
+            for (var mi = 0; mi < monsters.length; ++mi) {
+                maybe_slide(mp, monsters[mi]);
             }
-            if (slide_player) {
-                new_player_x = player.x + mp.dx;
-                new_player_y = player.y + mp.dy;
-                if (! collides_with_platforms(new_obj_at(player, new_player_x, new_player_y, mp.id))) {
-                    player.x = new_player_x;
-                    player.y = new_player_y;
-                }
-            }
+
             // apply motion
             for (var j = 0; j < platforms.length; ++j) {
                 if (platforms[j].moving_platform_id == mp.id) {
                     platforms[j].x += mp.dx;
                     platforms[j].y += mp.dy;
 
-                    // shove the player if necessary
-                    if (mp.dy > 0) {
-                        while (collides(platforms[j], player)) {
-                            //console.log("adjust down!");
-                            ++player.y;
-                        }
-                    } else if (mp.dy < 0) {
-                        while (collides(platforms[j], player)) {
-                            //console.log("adjust up!");
-                            --player.y;
-                        }
-                    }
-                    if (mp.dx > 0) {
-                        while (collides(platforms[j], player)) {
-                            //console.log("adjust right!");
-                            ++player.x;
-                        }
-                    } else if (mp.dx < 0) {
-                        while (collides(platforms[j], player)) {
-                            //console.log("adjust left!");
-                            --player.x;
-                        }
+                    // shove things if necessary
+                    maybe_shove(platforms[j], player, mp.dy, mp.dx);
+                    for (var mi = 0; mi < monsters.length; ++mi) {
+                        maybe_shove(platforms[j], monsters[mi], mp.dy, mp.dx);
                     }
                 }
             }
