@@ -1,8 +1,8 @@
 (function osp (c) {
     var WIDTH = 1024;
     var HEIGHT = 768;
-    var BLOCK_HEIGHT = 14;
-    var BLOCK_WIDTH = 14;
+    var BLOCK_HEIGHT = 18;
+    var BLOCK_WIDTH = 18;
 
     var sounds = {
         "bg": new Audio("drums.mp3"),
@@ -56,8 +56,8 @@
         'x': 0,
         'y': 0,
         'facing': 1,
-        'height': 12,
-        'width': 10,
+        'height': 16,
+        'width': 12,
         'xspeed': 0,
         'yspeed': 0,
         'dead': true,
@@ -373,8 +373,8 @@
             'y': 0,
             'xspeed': 0,
             'yspeed': 0,
-            'height': 8,
-            'width': 8,
+            'height': 10,
+            'width': 10,
             'dead': false,
             'ai': dork_ai,
             'health': 1,
@@ -411,8 +411,8 @@
             'y': 0,
             'xspeed': 0,
             'yspeed': 0,
-            'height': 24,
-            'width': 24,
+            'height': 28,
+            'width': 28,
             'dead': false,
             'direction': (Math.random() < 0.5) ? 1 : 0,
             'ai': goomba_ai,
@@ -439,8 +439,8 @@
             'y': 0,
             'xspeed': 0,
             'yspeed': 0,
-            'height': 24,
-            'width': 24,
+            'height': 28,
+            'width': 28,
             'dead': false,
             'direction': (Math.random() < 0.5) ? 1 : 0,
             'ai': paragoomba_ai,
@@ -462,10 +462,10 @@
         sounds["boss_rage"].volume = 0.1;
         sounds["boss_rage"].play();
         range_obj = {
-            'x': obj.x - 50,
-            'y': obj.y - 50,
-            'width': obj.width + 100,
-            'height': obj.width + 100,
+            'x': obj.x - 60,
+            'y': obj.y - 60,
+            'width': obj.width + 120,
+            'height': obj.width + 120,
         };
         for (i = 0; i < platforms.length; ++i) {
             if ((! platforms[i].indestructable) && (collides(range_obj, platforms[i]))) {
