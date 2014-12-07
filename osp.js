@@ -77,7 +77,7 @@
             if (collides_with_platforms(new_platform(bx+dx, by, null))) {
                 return false;
             }
-            if (collides(player, new_platform(bx+dx, by, null))) {
+            if ((! player.dead) && (collides(player, new_platform(bx+dx, by, null)))) {
                 return false;
             }
         }
