@@ -6,6 +6,15 @@
 
     var sounds = {
         "bg": new Audio("drums.mp3"),
+        "jump": new Audio("jump.mp3"),
+        "boss_rage": new Audio("boss_rage.mp3"),
+        "shoot": new Audio("shoot.mp3"),
+        "collect": new Audio("collect.mp3"),
+        "kill": new Audio("kill.mp3"),
+        "boss_kill": new Audio("boss_kill.mp3"),
+        "enemy_shoot": new Audio("enemy_shoot.mp3"),
+        "hit": new Audio("hit.mp3"),
+        "dead": new Audio("dead.mp3"),
     };
 
     sounds["bg"].load();
@@ -65,6 +74,9 @@
         'collectible_counter': 0,
         'cooldown_frame': 0,
         'kill': function(p) {
+            sounds["dead"].load();
+            sounds["dead"].volume = 0.1;
+            sounds["dead"].play();
             p.dead = true;
             ++p.death_counter;
             p.respawn_frame = frameno + 20;
@@ -269,6 +281,9 @@
 
         // up-down physics
         if ((! in_the_air) && (obj.press_jump)) {
+            sounds["jump"].load();
+            sounds["jump"].volume = 0.1;
+            sounds["jump"].play();
             obj.press_jump = false;
             obj.yspeed = JUMP;
         }
@@ -337,13 +352,14 @@
         move(player);
         for (var mi = 0; mi < monsters.length; ++mi) {
             if (collides(player, monsters[mi])) {
-                // TODO: event: player died
                 player.kill(player);
             }
         }
         for (var ci = 0; ci < collectibles.length; ++ci) {
             if ((! collectibles[ci].gone) && (collides(player, collectibles[ci]))) {
-                // TODO: event: collected collectible
+                sounds["collect"].load();
+                sounds["collect"].volume = 0.1;
+                sounds["collect"].play();
                 ++player.collectible_counter;
                 collectibles[ci].gone = true;
             }
@@ -363,6 +379,9 @@
             'ai': dork_ai,
             'health': 1,
             'kill': function(m) {
+                sounds["kill"].load();
+                sounds["kill"].volume = 0.1;
+                sounds["kill"].play();
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
                 m.dead = true;
             },
@@ -402,6 +421,9 @@
             'air_acceleration': 0.02,
             'health': 2,
             'kill': function(m) {
+                sounds["kill"].load();
+                sounds["kill"].volume = 0.1;
+                sounds["kill"].play();
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
                 m.dead = true;
             },
@@ -427,12 +449,18 @@
             'air_acceleration': 0.02,
             'health': 2,
             'kill': function(m) {
+                sounds["kill"].load();
+                sounds["kill"].volume = 0.1;
+                sounds["kill"].play();
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
                 m.dead = true;
             },
         };
     };
     var boss_rage = function(obj) {
+        sounds["boss_rage"].load();
+        sounds["boss_rage"].volume = 0.1;
+        sounds["boss_rage"].play();
         range_obj = {
             'x': obj.x - 50,
             'y': obj.y - 50,
@@ -462,6 +490,9 @@
             obj.next_rage = frameno + 500 - Math.floor(Math.random() * 50);
         }
         if (obj.cooldown_frame <= frameno) {
+            sounds["enemy_shoot"].load();
+            sounds["enemy_shoot"].volume = 0.1;
+            sounds["enemy_shoot"].play();
             projectiles.push(new_projectile(obj.x + obj.width / 2, obj.y + obj.height, 0, 6.5));
             obj.cooldown_frame = frameno + 5;
         }
@@ -485,6 +516,9 @@
             'health': 15,
             'cooldown_frame': 0,
             'kill': function(m) {
+                sounds["boss_kill"].load();
+                sounds["boss_kill"].volume = 0.1;
+                sounds["boss_kill"].play();
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 2000, 60, "#FF00FF");
                 m.dead = true;
             },
@@ -533,7 +567,6 @@
             return (m.dead && m.boss);
         });
         if (dead_bosses.length > 0) {
-            // TODO: event: you win!
             game_over = true;
         }
     };
@@ -615,6 +648,9 @@
     var projectiles = [];
     var shots_fired = function () {
         if ((player.cooldown_frame <= frameno) && (player.press_shoot)) {
+            sounds["shoot"].load();
+            sounds["shoot"].volume = 0.1;
+            sounds["shoot"].play();
             if (player.facing == 1) {
                 make_particles(player.x + player.width, player.y + player.height / 2, 10, 5, "#FF00FF");
                 projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5, 0));
@@ -633,12 +669,13 @@
         for (var i = 0; i < projectiles.length; ++i) {
             if (! projectiles[i].remove) {
                 if (collides(projectiles[i], player)) {
-                    // TODO: event: shot!
                     player.kill(player);
                 }
                 for (var mi = 0; mi < monsters.length; ++mi) {
                     if (collides(projectiles[i], monsters[mi])) {
-                        // TODO: event: hit!
+                        sounds["hit"].load();
+                        sounds["hit"].volume = 0.1;
+                        sounds["hit"].play();
                         // console.log("hit frameno=" + frameno + ", mi=" + mi + ", i=" + i + ".... health=" + monsters[mi].health);
                         --monsters[mi].health;
                         projectiles[i].remove = true;
