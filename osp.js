@@ -438,7 +438,11 @@
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
         for (var i = 0; i < platforms.length; ++i) {
-            ctx.fillStyle = "#FF0000";
+            var saturation = 10;
+            if (platforms[i].despawn_frame) {
+                saturation = 255 - Math.min(245, platforms[i].despawn_frame - frameno);
+            }
+            ctx.fillStyle = "rgb(255, " + saturation + ", " + saturation + ")";
             ctx.fillRect(platforms[i].x + offset_left, platforms[i].y + offset_top, platforms[i].width, platforms[i].height);
         }
 
