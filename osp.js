@@ -47,6 +47,9 @@
         'press_right': false,
         'press_jump': false,
         'unpress_jump': false,
+        'top_speed': 6,
+        'acceleration': 0.05,
+        'air_acceleration': 0.1
     };
     var monsters = [];
 
@@ -145,12 +148,8 @@
     //var meter = new FPSMeter();
 
     var frameno = 0;
-    var SPAWN_CHANCE = 0.004;
-    var ACCELERATION = 0.05;
-    var AIR_ACCELERATION = 0.1;
     var DECELERATION = 0.5;
     var FRICTION = 0.15;
-    var TOP_SPEED = 6; // setting to > BLOCK_WIDTH would be bad ;)
     var JUMP = -6.5;
     var UNJUMP = -3.0;
     var GRAVITY = 0.2;
@@ -162,7 +161,7 @@
         });
     }
     var maybe_spawn_platforms = function () {
-        if (Math.random() < SPAWN_CHANCE) {
+        if (Math.random() < 0.004) {
             if (Math.random() < 0.2) {
                 add_moving_platform(frameno);
             } else {
@@ -186,6 +185,15 @@
     var under_feet = function(player) {
         return new_obj_at(player, player.x, player.y+1);
     };
+
+    var spawn = function(obj) {
+        do {
+            platform = platforms[Math.floor(Math.random() * platforms.length)];
+            obj.x = platform.x;
+            obj.y = platform.y - obj.height;
+        } while ((obj.y < 0) || collides_with_platforms(obj) || (! collides_with_platforms(under_feet(obj))));
+        return obj;
+    };
     var maybe_respawn_player = function () {
         if (player.respawn_frame <= frameno) {
             // console.log("RESPAWN");
@@ -194,13 +202,7 @@
             player.xspeed = 0;
             player.yspeed = 0;
             player.facing = 1;
-            do {
-                platform = platforms[Math.floor(Math.random() * platforms.length)];
-                player.x = platform.x;
-                player.y = platform.y - player.height;
-                // console.log("trying: (" + player.x + ", " + player.y + ")");
-            } while ((player.y < 0) || collides_with_platforms(player) || (! collides_with_platforms(under_feet(player))));
-            // console.log("RESPAWN DONE!");
+            spawn(player);
         }
     }
 
@@ -210,24 +212,24 @@
         // console.log(in_the_air);
 
         // left-right physics
-        current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
+        var current_acceleration = in_the_air ? obj.air_acceleration : obj.acceleration;
         if (obj.press_left) {
             obj.facing = -1;
             if (obj.xspeed > 0) {
                 obj.xspeed -= DECELERATION;
-            } else if (obj.xspeed >= (-TOP_SPEED + current_acceleration)) {
+            } else if (obj.xspeed >= (-obj.top_speed + current_acceleration)) {
                 obj.xspeed = obj.xspeed - current_acceleration;
             } else {
-                obj.xspeed = -TOP_SPEED;
+                obj.xspeed = -obj.top_speed;
             }
         } else if (obj.press_right) {
             obj.facing = 1;
             if (obj.xspeed < 0) {
                 obj.xspeed += DECELERATION;
-            } else if (obj.xspeed <= (TOP_SPEED - current_acceleration)) {
+            } else if (obj.xspeed <= (obj.top_speed - current_acceleration)) {
                 obj.xspeed = obj.xspeed + current_acceleration;
             } else {
-                obj.xspeed = TOP_SPEED;
+                obj.xspeed = obj.top_speed;
             }
         } else {
             if (obj.xspeed > 0) {
@@ -313,6 +315,7 @@
         }
     };
 
+    var dork_ai = function(obj) {};
     var new_dork = function() {
         return {
             'x': 0,
@@ -321,32 +324,53 @@
             'yspeed': 0,
             'height': 8,
             'width': 8,
-            'dead': false
+            'dead': false,
+            'ai': dork_ai
+        };
+    };
+    var goomba_ai = function(obj) {
+        if (obj.direction == 1) {
+            if (collides_with_platforms(new_obj_at(obj, obj.x+1, obj.y))) {
+                obj.direction = -1;
+            }
+        } else {
+            if (collides_with_platforms(new_obj_at(obj, obj.x-1, obj.y))) {
+                obj.direction = 1;
+            }
+        }
+        if (obj.direction == 1) {
+            obj.press_left = false;
+            obj.press_right = true;
+        } else {
+            obj.press_right = false;
+            obj.press_left = true;
+        }
+    }
+    var new_goomba = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 24,
+            'width': 24,
+            'dead': false,
+            'direction': (Math.random() < 0.5) ? 1 : 0,
+            'ai': goomba_ai,
+            'top_speed': 1,
+            'acceleration': 0.02,
+            'air_acceleration': 0.02
         };
     };
 
-    var spawn_dork = function() {
-        var dork = new_dork();
-        do {
-            platform = platforms[Math.floor(Math.random() * platforms.length)];
-            dork.x = platform.x;
-            dork.y = platform.y - dork.height;
-        } while ((dork.y < 0) || collides_with_platforms(dork) || (! collides_with_platforms(under_feet(dork))));
-        monsters.push(dork);
-    };
-
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
-    spawn_dork();
+    monsters.push(spawn(new_dork()));
+    monsters.push(spawn(new_dork()));
+    monsters.push(spawn(new_dork()));
+    monsters.push(spawn(new_goomba()));
 
     var move_monsters = function() {
         for (var i = 0; i < monsters.length; ++i) {
+            monsters[i].ai(monsters[i]);
             move(monsters[i]);
         }
     };
