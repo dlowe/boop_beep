@@ -42,7 +42,13 @@
         'dead': true,
         'respawn_frame': 0,
         'death_counter': 0,
+        'press_shoot': false,
+        'press_left': false,
+        'press_right': false,
+        'press_jump': false,
+        'unpress_jump': false,
     };
+    var monsters = [];
 
     var collides = function(o1, o2) {
         if ((o1.moving_platform_id != null) &&
@@ -77,6 +83,11 @@
             }
             if ((! player.dead) && (collides(player, new_platform(bx+dx, by, null)))) {
                 return false;
+            }
+            for (var i = 0; i < monsters.length; ++i) {
+                if ((! monsters[i].dead) && (collides(monsters[i], new_platform(bx+dx, by, null)))) {
+                    return false;
+                }
             }
         }
         return true;
@@ -144,11 +155,6 @@
     var UNJUMP = -3.0;
     var GRAVITY = 0.2;
     var TERMINAL_VELOCITY = 9; // setting to > BLOCK_HEIGHT would be bad ;)
-    var press_left = false;
-    var press_right = false;
-    var press_jump = false;
-    var unpress_jump = false;
-    var press_shoot = false;
 
     var maybe_despawn_platforms = function () {
         platforms = platforms.filter(function(p) {
@@ -198,105 +204,157 @@
         }
     }
 
-    var move_player = function () {
+    var move = function(obj) {
         // are we falling?
-        var in_the_air = (! collides_with_platforms(under_feet(player)));
-        //console.log(in_the_air);
+        var in_the_air = (! collides_with_platforms(under_feet(obj)));
+        // console.log(in_the_air);
 
         // left-right physics
         current_acceleration = in_the_air ? AIR_ACCELERATION : ACCELERATION;
-        if (press_left) {
-            player.facing = -1;
-            if (player.xspeed > 0) {
-                player.xspeed -= DECELERATION;
-            } else if (player.xspeed >= (-TOP_SPEED + current_acceleration)) {
-                player.xspeed = player.xspeed - current_acceleration;
+        if (obj.press_left) {
+            obj.facing = -1;
+            if (obj.xspeed > 0) {
+                obj.xspeed -= DECELERATION;
+            } else if (obj.xspeed >= (-TOP_SPEED + current_acceleration)) {
+                obj.xspeed = obj.xspeed - current_acceleration;
             } else {
-                player.xspeed = -TOP_SPEED;
+                obj.xspeed = -TOP_SPEED;
             }
-        } else if (press_right) {
-            player.facing = 1;
-            if (player.xspeed < 0) {
-                player.xspeed += DECELERATION;
-            } else if (player.xspeed <= (TOP_SPEED - current_acceleration)) {
-                player.xspeed = player.xspeed + current_acceleration;
+        } else if (obj.press_right) {
+            obj.facing = 1;
+            if (obj.xspeed < 0) {
+                obj.xspeed += DECELERATION;
+            } else if (obj.xspeed <= (TOP_SPEED - current_acceleration)) {
+                obj.xspeed = obj.xspeed + current_acceleration;
             } else {
-                player.xspeed = TOP_SPEED;
+                obj.xspeed = TOP_SPEED;
             }
         } else {
-            if (player.xspeed > 0) {
-                player.xspeed = Math.max(0, player.xspeed - FRICTION);
-            } else if (player.xspeed < 0) {
-                player.xspeed = Math.min(0, player.xspeed + FRICTION);
+            if (obj.xspeed > 0) {
+                obj.xspeed = Math.max(0, obj.xspeed - FRICTION);
+            } else if (obj.xspeed < 0) {
+                obj.xspeed = Math.min(0, obj.xspeed + FRICTION);
             }
         }
 
         // up-down physics
-        if ((! in_the_air) && (press_jump)) {
-            press_jump = false;
-            player.yspeed = JUMP;
+        if ((! in_the_air) && (obj.press_jump)) {
+            obj.press_jump = false;
+            obj.yspeed = JUMP;
         }
-        if (unpress_jump) {
-            unpress_jump = false;
-            if (player.yspeed < UNJUMP) {
-                player.yspeed = UNJUMP;
+        if (obj.unpress_jump) {
+            obj.unpress_jump = false;
+            if (obj.yspeed < UNJUMP) {
+                obj.yspeed = UNJUMP;
             }
         }
         if (in_the_air) {
-            player.yspeed = Math.min(TERMINAL_VELOCITY, player.yspeed + GRAVITY);
+            obj.yspeed = Math.min(TERMINAL_VELOCITY, obj.yspeed + GRAVITY);
         }
 
         // collisions & falling death
-        var new_player_x = player.x + player.xspeed;
-        var new_player_y = player.y + player.yspeed;
-        if (new_player_y >= HEIGHT + player.height) {
+        var new_x = obj.x + obj.xspeed;
+        var new_y = obj.y + obj.yspeed;
+        if (new_y >= HEIGHT + obj.height) {
             console.log("fell out of the world");
-            ++player.death_counter;
-            player.dead = true;
-            player.respawn_frame = frameno + 20;
+            ++obj.death_counter;
+            obj.dead = true;
+            obj.respawn_frame = frameno + 20;
             return;
         }
-        if (collides_with_platforms(player)) {
+        if (collides_with_platforms(obj)) {
             console.log("squished");
-            ++player.death_counter;
-            player.dead = true;
-            player.respawn_frame = frameno + 20;
+            ++obj.death_counter;
+            obj.dead = true;
+            obj.respawn_frame = frameno + 20;
             return;
         }
 
         do { // janky loop works around a bug with corner collisions
-            if (player.yspeed > 0) {
-                while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
+            if (obj.yspeed > 0) {
+                while (collides_with_platforms(new_obj_at(obj, obj.x, new_y))) {
                     // console.log("bottom bump!");
-                    player.yspeed = 0;
-                    --new_player_y;
+                    obj.yspeed = 0;
+                    --new_y;
                 }
-            } else if (player.yspeed < 0) {
-                while (collides_with_platforms(new_obj_at(player, player.x, new_player_y))) {
+            } else if (obj.yspeed < 0) {
+                while (collides_with_platforms(new_obj_at(obj, obj.x, new_y))) {
                     // console.log("top bump!");
-                    player.yspeed = 0;
-                    ++new_player_y;
+                    obj.yspeed = 0;
+                    ++new_y;
                 }
             }
-            if (player.xspeed > 0) {
-                while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
+            if (obj.xspeed > 0) {
+                while (collides_with_platforms(new_obj_at(obj, new_x, obj.y))) {
                     // console.log("right bump!");
-                    player.xspeed = 0;
-                    --new_player_x;
+                    obj.xspeed = 0;
+                    --new_x;
                 }
-            } else if (player.xspeed < 0) {
-                while (collides_with_platforms(new_obj_at(player, new_player_x, player.y))) {
+            } else if (obj.xspeed < 0) {
+                while (collides_with_platforms(new_obj_at(obj, new_x, obj.y))) {
                     // console.log("left bump!");
-                    player.xspeed = 0;
-                    ++new_player_x;
+                    obj.xspeed = 0;
+                    ++new_x;
                 }
             }
 
             // apply motion
-            player.x = new_player_x;
-            player.y = new_player_y;
-        } while (collides_with_platforms(player));
+            obj.x = new_x;
+            obj.y = new_y;
+        } while (collides_with_platforms(obj));
     };
+    var move_player = function() {
+        move(player);
+    };
+
+    var new_dork = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 8,
+            'width': 8,
+            'dead': false
+        };
+    };
+
+    var spawn_dork = function() {
+        var dork = new_dork();
+        do {
+            platform = platforms[Math.floor(Math.random() * platforms.length)];
+            dork.x = platform.x;
+            dork.y = platform.y - dork.height;
+            // console.log(dork);
+        } while ((dork.y < 0) || collides_with_platforms(dork) || (! collides_with_platforms(under_feet(dork))));
+        // console.log(dork);
+        monsters.push(dork);
+        // console.log(monsters);
+    };
+
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+    spawn_dork();
+
+    // console.log(monsters);
+
+    var move_monsters = function() {
+        for (var i = 0; i < monsters.length; ++i) {
+            move(monsters[i]);
+        }
+    };
+    var maybe_despawn_monsters = function() {
+        monsters = monsters.filter(function(m) {
+            return (! m.dead);
+        });
+    };
+
     var new_projectile = function(x, y, dx) {
         return {
             'x': x,
@@ -308,21 +366,30 @@
     };
     var projectiles = [];
     var shots_fired = function () {
-        if (press_shoot) {
+        if (player.press_shoot) {
             if (player.facing == 1) {
                 projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5));
             } else {
                 projectiles.push(new_projectile(player.x, player.y + player.height / 2, -6.5));
             }
-            press_shoot = false;
+            player.press_shoot = false;
         }
     };
     var move_projectiles = function() {
         for (var i = 0; i < projectiles.length; ++i) {
             projectiles[i].x += projectiles[i].dx;
         }
+        for (var i = 0; i < projectiles.length; ++i) {
+            for (var mi = 0; mi < monsters.length; ++mi) {
+                if (collides(projectiles[i], monsters[mi])) {
+                    console.log("SHOT!");
+                    monsters[mi].dead = true;
+                    projectiles[i].remove = true;
+                }
+            }
+        }
         projectiles = projectiles.filter(function(p) {
-            return (! collides_with_platforms(p));
+            return (! (p.remove || collides_with_platforms(p)));
         });
     };
     var move_platforms = function() {
@@ -400,7 +467,9 @@
         ++frameno;
         move_platforms();
         move_projectiles();
+        move_monsters();
         maybe_despawn_platforms();
+        maybe_despawn_monsters();
         maybe_spawn_platforms();
         if (player.dead) {
             maybe_respawn_player();
@@ -414,23 +483,23 @@
         switch (e.keyCode) {
             case 37:
             case 65:
-                press_left = true;
+                player.press_left = true;
                 return false;
                 break;
             case 39:
             case 68:
-                press_right = true;
+                player.press_right = true;
                 return false;
                 break;
             case 38:
             case 32:
-                unpress_jump = false;
-                press_jump = true;
+                player.unpress_jump = false;
+                player.press_jump = true;
                 return false;
                 break;
             case 16:
             case 88:
-                press_shoot = true;
+                player.press_shoot = true;
                 return false;
                 break;
         };
@@ -439,23 +508,23 @@
         switch (e.keyCode) {
             case 37:
             case 65:
-                press_left = false;
+                player.press_left = false;
                 return false;
                 break;
             case 39:
             case 68:
-                press_right = false;
+                player.press_right = false;
                 return false;
                 break;
             case 38:
             case 32:
-                unpress_jump = true;
-                press_jump = false;
+                player.unpress_jump = true;
+                player.press_jump = false;
                 return false;
                 break;
             case 16:
             case 88:
-                press_shoot = false;
+                player.press_shoot = false;
                 return false;
                 break;
         };
@@ -498,6 +567,14 @@
         if (! player.dead) {
             ctx.fillStyle = "#00FF00";
             ctx.fillRect(player.x + offset_left, player.y + offset_top, player.width, player.height);
+        }
+
+        // render monsters
+        for (var i = 0; i < monsters.length; ++i) {
+            if (! monsters[i].dead) {
+                ctx.fillStyle = "#FF00FF";
+                ctx.fillRect(monsters[i].x + offset_left, monsters[i].y + offset_top, monsters[i].width, monsters[i].height);
+            }
         }
     };
     var STEP = 1/60;
