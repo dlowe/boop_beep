@@ -406,6 +406,7 @@
     };
     var new_boss = function() {
         return {
+            'boss': true,
             'x': 0,
             'y': 0,
             'xspeed': 0,
@@ -439,6 +440,17 @@
         });
     };
 
+    var game_over = false;
+    var maybe_win_the_game = function() {
+        dead_bosses = monsters.filter(function(m) {
+            return (m.dead && m.boss);
+        });
+        if (dead_bosses.length > 0) {
+            // TODO: event: you win!
+            game_over = true;
+        }
+    };
+
     var new_collectible = function() {
         return {
             'x': 0,
@@ -450,7 +462,7 @@
     };
     var collectibles = [];
 
-    for (var i = 0; i < 30; ++i) {
+    for (var i = 0; i < 1; ++i) {
         collectibles.push(air_spawn(new_collectible()));
     }
 
@@ -589,6 +601,7 @@
         ++frameno;
         move_platforms();
         move_projectiles();
+        maybe_win_the_game();
         move_monsters();
         maybe_despawn_platforms();
         maybe_despawn_monsters();
@@ -706,6 +719,12 @@
                 ctx.fillStyle = "#FF00FF";
                 ctx.fillRect(monsters[i].x + offset_left, monsters[i].y + offset_top, monsters[i].width, monsters[i].height);
             }
+        }
+
+        if (game_over) {
+            ctx.fillStyle = "#000000";
+            ctx.font = "100px Impact";
+            ctx.fillText("YOU WIN!", WIDTH / 2 - 170, HEIGHT / 2);
         }
     };
     var STEP = 1/60;
