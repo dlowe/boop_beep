@@ -49,7 +49,8 @@
         'unpress_jump': false,
         'top_speed': 6,
         'acceleration': 0.05,
-        'air_acceleration': 0.1
+        'air_acceleration': 0.1,
+        'collectible_counter': 0
     };
     var monsters = [];
 
@@ -194,6 +195,15 @@
         } while ((obj.y < 0) || collides_with_platforms(obj) || (! collides_with_platforms(under_feet(obj))));
         return obj;
     };
+
+    var air_spawn = function(obj) {
+        do {
+            obj.x = Math.floor(Math.random() * WIDTH);
+            obj.y = Math.floor(Math.random() * HEIGHT);
+        } while (collides_with_platforms(obj));
+        return obj;
+    };
+
     var maybe_respawn_player = function () {
         if (player.respawn_frame <= frameno) {
             // console.log("RESPAWN");
@@ -309,9 +319,17 @@
         move(player);
         for (var mi = 0; mi < monsters.length; ++mi) {
             if (collides(player, monsters[mi])) {
-                ++obj.death_counter;
+                // TODO: event: player died
+                ++player.death_counter;
                 player.dead = true;
                 player.respawn_frame = frameno + 20;
+            }
+        }
+        for (var ci = 0; ci < collectibles.length; ++ci) {
+            if ((! collectibles[ci].gone) && (collides(player, collectibles[ci]))) {
+                // TODO: event: collected collectible
+                ++player.collectible_counter;
+                collectibles[ci].gone = true;
             }
         }
     };
@@ -366,7 +384,7 @@
     var paragoomba_ai = function(obj) {
         goomba_ai(obj);
         obj.press_jump = true;
-    }
+    };
     var new_paragoomba = function() {
         return {
             'x': 0,
@@ -378,6 +396,25 @@
             'dead': false,
             'direction': (Math.random() < 0.5) ? 1 : 0,
             'ai': paragoomba_ai,
+            'top_speed': 1,
+            'acceleration': 0.02,
+            'air_acceleration': 0.02
+        };
+    };
+    var boss_ai = function(obj) {
+        goomba_ai(obj);
+    };
+    var new_boss = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 120,
+            'width': 120,
+            'dead': false,
+            'direction': (Math.random() < 0.5) ? 1 : 0,
+            'ai': boss_ai,
             'top_speed': 1,
             'acceleration': 0.02,
             'air_acceleration': 0.02
@@ -400,6 +437,32 @@
         monsters = monsters.filter(function(m) {
             return (! m.dead);
         });
+    };
+
+    var new_collectible = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'height': 5,
+            'width': 5,
+            'gone': false
+        };
+    };
+    var collectibles = [];
+
+    for (var i = 0; i < 30; ++i) {
+        collectibles.push(air_spawn(new_collectible()));
+    }
+
+    var maybe_despawn_collectibles = function() {
+        if (collectibles.length > 0) {
+            collectibles = collectibles.filter(function(c) {
+                return (! c.gone);
+            });
+            if (collectibles.length == 0) {
+                monsters.push(air_spawn(new_boss()));
+            }
+        }
     };
 
     var new_projectile = function(x, y, dx) {
@@ -529,6 +592,7 @@
         move_monsters();
         maybe_despawn_platforms();
         maybe_despawn_monsters();
+        maybe_despawn_collectibles();
         maybe_spawn_platforms();
         if (player.dead) {
             maybe_respawn_player();
@@ -594,16 +658,24 @@
     var ctx = c.getContext("2d");
     var render = function () {
         // clear
-        ctx.fillStyle = "#FFFFFF";
+        ctx.fillStyle = "#999999";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        // render collectibles
+        for (var i = 0; i < collectibles.length; ++i) {
+            if (! collectibles[i].gone) {
+                ctx.fillStyle = "#FFFF00";
+                ctx.fillRect(collectibles[i].x + offset_left, collectibles[i].y + offset_top, collectibles[i].width, collectibles[i].height);
+            }
+        }
 
         // render platforms
         for (var i = 0; i < platforms.length; ++i) {
             var saturation = 10;
             if (platforms[i].despawn_frame) {
-                saturation = 255 - Math.min(245, platforms[i].despawn_frame - frameno);
+                saturation = 153 - Math.min(143, platforms[i].despawn_frame - frameno);
             }
-            ctx.fillStyle = "rgb(255, " + saturation + ", " + saturation + ")";
+            ctx.fillStyle = "rgb(153, " + saturation + ", " + saturation + ")";
             ctx.fillRect(platforms[i].x + offset_left, platforms[i].y + offset_top, platforms[i].width, platforms[i].height);
         }
 
