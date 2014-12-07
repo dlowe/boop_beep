@@ -362,11 +362,32 @@
             'air_acceleration': 0.02
         };
     };
+    var paragoomba_ai = function(obj) {
+        goomba_ai(obj);
+        obj.press_jump = true;
+    }
+    var new_paragoomba = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 24,
+            'width': 24,
+            'dead': false,
+            'direction': (Math.random() < 0.5) ? 1 : 0,
+            'ai': paragoomba_ai,
+            'top_speed': 1,
+            'acceleration': 0.02,
+            'air_acceleration': 0.02
+        };
+    };
 
     monsters.push(spawn(new_dork()));
     monsters.push(spawn(new_dork()));
     monsters.push(spawn(new_dork()));
     monsters.push(spawn(new_goomba()));
+    monsters.push(spawn(new_paragoomba()));
 
     var move_monsters = function() {
         for (var i = 0; i < monsters.length; ++i) {
