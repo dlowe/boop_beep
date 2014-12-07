@@ -50,7 +50,8 @@
         'top_speed': 6,
         'acceleration': 0.05,
         'air_acceleration': 0.1,
-        'collectible_counter': 0
+        'collectible_counter': 0,
+        'cooldown_frame': 0,
     };
     var monsters = [];
 
@@ -492,13 +493,13 @@
     };
     var projectiles = [];
     var shots_fired = function () {
-        if (player.press_shoot) {
+        if ((player.cooldown_frame <= frameno) && (player.press_shoot)) {
             if (player.facing == 1) {
                 projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5));
             } else {
                 projectiles.push(new_projectile(player.x, player.y + player.height / 2, -6.5));
             }
-            player.press_shoot = false;
+            player.cooldown_frame = frameno + 15;
         }
     };
     var move_projectiles = function() {
