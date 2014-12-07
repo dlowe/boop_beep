@@ -13,22 +13,26 @@
     var offset_top = HEIGHT - (BLOCK_HEIGHT * bheight);
 
     var platforms = [];
-    var new_platform = function(bx, by, despawn_frame) {
+    var new_platform = function(bx, by, despawn_frame, indestructable) {
+        if (indestructable === undefined) {
+            indestructable = false;
+        }
         return {
             'x': bx * BLOCK_WIDTH,
             'y': by * BLOCK_HEIGHT,
             'height': BLOCK_HEIGHT,
             'width': BLOCK_WIDTH,
-            'despawn_frame': despawn_frame
+            'despawn_frame': despawn_frame,
+            'indestructable': indestructable,
         };
     };
     for (var bx = 0; bx < bwidth; ++bx) {
-        platforms.push(new_platform(bx, 0, null));
+        platforms.push(new_platform(bx, 0, null, true));
         platforms.push(new_platform(bx, bheight - 1, Math.floor((Math.random() * 9000) + 1000)));
     }
     for (var by = 0; by < bheight; ++by) {
-        platforms.push(new_platform(0, by, null));
-        platforms.push(new_platform(bwidth - 1, by, null));
+        platforms.push(new_platform(0, by, null, true));
+        platforms.push(new_platform(bwidth - 1, by, null, true));
     }
 
     var player = {
@@ -56,7 +60,7 @@
             p.dead = true;
             ++p.death_counter;
             p.respawn_frame = frameno + 20;
-            make_particles(p.x, p.y, 400, 15, "#00FF00");
+            make_particles(p.x + p.width / 2, p.y + p.height / 2, 1400, 19, "#00FF00");
         }
     };
     var monsters = [];
@@ -281,7 +285,11 @@
         }
         if (collides_with_platforms(obj)) {
             // console.log("squished");
-            obj.kill(obj);
+            if (obj.squish) {
+                obj.squish(obj);
+            } else {
+                obj.kill(obj);
+            }
             return;
         }
 
@@ -417,8 +425,26 @@
             },
         };
     };
+    var boss_rage = function(obj) {
+        range_obj = {
+            'x': obj.x - 50,
+            'y': obj.y - 50,
+            'width': obj.width + 100,
+            'height': obj.width + 100,
+        };
+        for (i = 0; i < platforms.length; ++i) {
+            if ((! platforms[i].indestructable) && (collides(range_obj, platforms[i]))) {
+                make_particles(platforms[i].x + platforms[i].width / 2, platforms[i].y + platforms[i].height / 2, 100, 20, "#FF0000");
+                platforms[i].despawn_frame = frameno;
+            }
+        }
+    }
     var boss_ai = function(obj) {
         goomba_ai(obj);
+        if (obj.next_rage <= frameno) {
+            boss_rage(obj);
+            obj.next_rage = frameno + 500;
+        }
     };
     var new_boss = function() {
         return {
@@ -437,9 +463,11 @@
             'air_acceleration': 0.02,
             'health': 15,
             'kill': function(m) {
-                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 1000, 30, "#FF00FF");
+                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 2000, 60, "#FF00FF");
                 m.dead = true;
             },
+            'squish': boss_rage,
+            'next_rage': frameno,
         };
     };
 
@@ -793,7 +821,7 @@
         // render particles
         for (var i = 0; i < particles.length; ++i) {
             ctx.fillStyle = particles[i].color;
-            ctx.fillRect(particles[i].x + offset_left, particles[i].y + offset_top, 1, 1);
+            ctx.fillRect(particles[i].x + offset_left, particles[i].y + offset_top, 2, 2);
         }
 
         if (game_over) {
