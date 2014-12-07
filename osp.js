@@ -44,6 +44,7 @@
         'yspeed': 0,
         'dead': true,
         'respawn_frame': 0,
+        'death_counter': 0,
     };
 
     var collides = function(o1, o2) {
@@ -261,12 +262,14 @@
         var new_player_y = player.y + player.yspeed;
         if (new_player_y >= HEIGHT + player.height) {
             console.log("fell out of the world");
+            ++player.death_counter;
             player.dead = true;
             player.respawn_frame = frameno + 20;
             return;
         }
         if (collides_with_platforms(player)) {
             console.log("squished");
+            ++player.death_counter;
             player.dead = true;
             player.respawn_frame = frameno + 20;
             return;
@@ -445,6 +448,9 @@
         //ctx.fillText(player.yspeed, 30, 50);
         //ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
         //ctx.fillText("(" + left_bx(player.x) + ", " + top_by(player.y) + ")", 30, 70);
+        ctx.fillStyle = "#000000";
+        ctx.font = "14px Impact";
+        ctx.fillText("DEATHS: " + player.death_counter, WIDTH - 68, 16);
         if (! player.dead) {
             ctx.fillStyle = "#00FF00";
             ctx.fillRect(player.x + offset_left, player.y + offset_top, player.width, player.height);
