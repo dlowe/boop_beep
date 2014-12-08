@@ -237,7 +237,7 @@
     };
     var moving_platforms = [];
     var add_moving_platform = function (f) {
-        var vertical = (Math.random() < 0.59) ? true : false;
+        var vertical = (Math.random() < 0.65) ? true : false;
         var horizontal = ! vertical;
         var backwards = (Math.random() < 0.5) ? true : false;
         var speed = scaled_platform_speed(f);
