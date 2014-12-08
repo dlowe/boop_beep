@@ -456,7 +456,7 @@
             'width': 10,
             'dead': false,
             'ai': dork_ai,
-            'health': 1,
+            'health': 2,
             'kill': function(m) {
                 sounds["kill"].load();
                 sounds["kill"].volume = 0.1;
@@ -503,7 +503,7 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'deceleration': 0.5,
-            'health': 2,
+            'health': 3,
             'sprite_speed': 2,
             'sprite_index': 0,
             'sprite_array': sprites.goomba,
@@ -536,7 +536,7 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'deceleration': 0.5,
-            'health': 2,
+            'health': 3,
             'sprite_speed': 2,
             'sprite_index': 0,
             'sprite_array': sprites.goomba,
@@ -616,7 +616,7 @@
             'air_acceleration': 0.05,
             'deceleration': 1,
             'last_health': 15,
-            'health': 15,
+            'health': 25,
             'cooldown_frame': 0,
             'kill': function(m) {
                 sounds["boss_kill"].load();
