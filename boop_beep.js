@@ -27,6 +27,8 @@
         "boss": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
         "player_right": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
         "player_left": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+        "sniper_left": new Image(),
+        "sniper_right": new Image(),
     }
 
     sprites.collectible.src = "collectible.png";
@@ -69,6 +71,8 @@
     sprites.player_left[5].src = "player_left6.png";
     sprites.player_left[6].src = "player_left7.png";
     sprites.player_left[7].src = "player_left8.png";
+    sprites.sniper_left.src = "sniper_left.png";
+    sprites.sniper_right.src = "sniper_right.png";
 
     sounds["bg"].load();
     sounds["bg"].loop = true;
@@ -672,9 +676,11 @@
                 var x;
                 var dx;
                 if (player.x > obj.x) {
+                    obj.facing = 1;
                     x = obj.x + obj.width;
                     dx = 6.5;
                 } else {
+                    obj.facing = 0;
                     x = obj.x;
                     dx = -6.5;
                 }
@@ -696,12 +702,15 @@
             'health': 1,
             'kill': monster_kill,
             'cooldown_frame': 0,
+            'facing': 1,
+            'sprite': function(m) {
+                if (m.facing == 1) {
+                    return sprites.sniper_right;
+                }
+                return sprites.sniper_left;
+            },
         };
     };
-
-    monsters.push(spawn(new_sniper()));
-    monsters.push(spawn(new_sniper()));
-    monsters.push(spawn(new_sniper()));
 
     var monster_spawn_frame = 0;
     var maybe_spawn_monsters = function() {
