@@ -1,7 +1,7 @@
 (function boop_beep(c) {
     'use strict';
-    var WIDTH = 900;
-    var HEIGHT = 768;
+    var WIDTH = 850;
+    var HEIGHT = 736;
     var BLOCK_HEIGHT = 18;
     var BLOCK_WIDTH = 18;
 
