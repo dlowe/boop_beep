@@ -331,6 +331,7 @@
             player.yspeed = 0;
             player.facing = 1;
             spawn(player);
+            bullseyes.push(new_bullseye(player.x + player.width / 2, player.y + player.height / 2, 120, "#00FF00"));
         }
     }
 
@@ -680,7 +681,9 @@
                 constructors.push(new_paragoomba);
             }
             constructor = constructors[Math.floor(Math.random() * constructors.length)];
-            monsters.push(spawn(constructor()));
+            new_monster = spawn(constructor());
+            monsters.push(new_monster);
+            bullseyes.push(new_bullseye(new_monster.x + new_monster.width / 2, new_monster.y + new_monster.height / 2, 30, "#FF00FF"));
             monster_spawn_frame = frameno + Math.floor(Math.random() * 600) + 200;
         }
     };
@@ -731,6 +734,26 @@
                 monsters.push(air_spawn(new_boss()));
             }
         }
+    };
+
+    var bullseyes = [];
+    var new_bullseye = function(x, y, r, color) {
+        return {
+            'x': x,
+            'y': y,
+            'r': r,
+            'color': color
+        };
+    };
+    var move_bullseyes = function() {
+        for (var i = 0; i < bullseyes.length; ++i) {
+            bullseyes[i].r -= 3;
+        }
+    };
+    var maybe_despawn_bullseyes = function() {
+        bullseyes = bullseyes.filter(function(b) {
+            return (b.r > 0);
+        });
     };
 
     var new_particle = function(x, y, dx, dy, duration, color) {
@@ -913,6 +936,7 @@
     var update = function () {
         ++frameno;
         move_particles();
+        move_bullseyes();
         move_platforms();
         move_projectiles();
         move_monsters();
@@ -921,6 +945,7 @@
         maybe_despawn_monsters();
         maybe_despawn_collectibles();
         maybe_despawn_particles();
+        maybe_despawn_bullseyes();
         maybe_spawn_platforms();
         maybe_spawn_monsters();
         if (player.dead) {
@@ -1024,6 +1049,17 @@
         ctx.fillStyle = "#000000";
         ctx.font = "14px Impact";
         ctx.fillText("DEATHS: " + player.death_counter, WIDTH - 68, 16);
+
+        // render bullseyes
+        for (var i = 0; i < bullseyes.length; ++i) {
+            if (bullseyes[i].r > 0) {
+                ctx.strokeStyle = bullseyes[i].color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(bullseyes[i].x + offset_left, bullseyes[i].y + offset_top, bullseyes[i].r, 0, 2*Math.PI);
+                ctx.stroke();
+            }
+        }
 
         // render player
         if (! player.dead) {
