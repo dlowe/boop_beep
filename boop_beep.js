@@ -29,6 +29,7 @@
         "player_left": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
         "sniper_left": new Image(),
         "sniper_right": new Image(),
+        "mine": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
     }
 
     sprites.collectible.src = "collectible.png";
@@ -73,6 +74,14 @@
     sprites.player_left[7].src = "player_left8.png";
     sprites.sniper_left.src = "sniper_left.png";
     sprites.sniper_right.src = "sniper_right.png";
+    sprites.mine[0].src = "mine1.png";
+    sprites.mine[1].src = "mine2.png";
+    sprites.mine[2].src = "mine3.png";
+    sprites.mine[3].src = "mine4.png";
+    sprites.mine[4].src = "mine5.png";
+    sprites.mine[5].src = "mine6.png";
+    sprites.mine[6].src = "mine7.png";
+    sprites.mine[7].src = "mine8.png";
 
     sounds["bg"].load();
     sounds["bg"].loop = true;
@@ -568,15 +577,15 @@
             'kill': monster_kill,
         };
     };
-    var boss_rage = function(obj) {
+    var rage = function(obj, distance) {
         sounds["boss_rage"].load();
         sounds["boss_rage"].volume = 0.1;
         sounds["boss_rage"].play();
         range_obj = {
-            'x': obj.x - 60,
-            'y': obj.y - 60,
-            'width': obj.width + 120,
-            'height': obj.width + 120,
+            'x': obj.x - distance,
+            'y': obj.y - distance,
+            'width': obj.width + 2 * distance,
+            'height': obj.width + 2 * distance,
         };
         for (i = 0; i < platforms.length; ++i) {
             if ((! platforms[i].indestructable) && (collides(range_obj, platforms[i]))) {
@@ -585,6 +594,9 @@
             }
         }
     }
+    var boss_rage = function(obj) {
+        rage(obj, 60);
+    };
     var boss_ai = function(obj) {
         goomba_ai(obj);
         if (obj.y > 150) {
@@ -711,11 +723,46 @@
             },
         };
     };
+    var mine_ai = function(obj) {
+        range_obj = {
+            'x': obj.x - 30,
+            'y': obj.y - 30,
+            'width': obj.width + 2 * 30,
+            'height': obj.height + 2 * 30,
+        };
+        if (collides(player, range_obj)) {
+            obj.kill(obj);
+            rage(obj, 30);
+        }
+    };
+    var new_mine = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 22,
+            'width': 20,
+            'dead': false,
+            'ai': mine_ai,
+            'health': 5,
+            'kill': monster_kill,
+            'sprite_speed': 8,
+            'sprite_index': 0,
+            'sprite_array': sprites.mine,
+            'sprite': animated_sprite,
+        };
+    };
+
+    monsters.push(spawn(new_mine()));
+    monsters.push(spawn(new_mine()));
+    monsters.push(spawn(new_mine()));
+    monsters.push(spawn(new_mine()));
 
     var monster_spawn_frame = 0;
     var maybe_spawn_monsters = function() {
         if (monster_spawn_frame <= frameno) {
-            constructors = [ new_dork ];
+            constructors = [ new_dork, new_mine ];
             if (frameno > 1800) {
                 constructors.push(new_sniper);
                 constructors.push(new_goomba);
