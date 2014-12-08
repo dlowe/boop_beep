@@ -574,6 +574,15 @@
         }
         if (obj.health < obj.last_health) {
             obj.next_rage -= 500;
+            if (player.x > obj.x) {
+                console.log("coming right to get you");
+                obj.press_right = true;
+                obj.press_left = false;
+            } else {
+                console.log("coming left to get you");
+                obj.press_left = true;
+                obj.press_right = false;
+            }
         }
         obj.last_health = obj.health;
         if (obj.next_rage <= frameno) {
