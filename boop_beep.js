@@ -32,7 +32,7 @@
         "mine": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
         "pod": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
         "podling": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
-    }
+    };
 
     sprites.collectible.src = "collectible.png";
     sprites.platform.src = "platform.png";
@@ -101,9 +101,9 @@
     sprites.podling[8].src = "podling9.png";
     sprites.podling[9].src = "podling10.png";
 
-    sounds["bg"].load();
-    sounds["bg"].loop = true;
-    sounds["bg"].play();
+    sounds.bg.load();
+    sounds.bg.loop = true;
+    sounds.bg.play();
 
     c.width = WIDTH;
     c.height = HEIGHT;
@@ -125,8 +125,8 @@
             'width': BLOCK_WIDTH,
             'despawn_frame': despawn_frame,
             'indestructable': indestructable,
-            'sprite': function(obj) {
-                return sprites["platform"];
+            'sprite': function() {
+                return sprites.platform;
             },
         };
     };
@@ -164,9 +164,9 @@
         'collectible_counter': 0,
         'cooldown_frame': 0,
         'kill': function(p) {
-            sounds["dead"].load();
-            sounds["dead"].volume = 0.1;
-            sounds["dead"].play();
+            sounds.dead.load();
+            sounds.dead.volume = 0.1;
+            sounds.dead.play();
             p.dead = true;
             ++p.death_counter;
             p.respawn_frame = frameno + 20;
@@ -176,12 +176,12 @@
         'sprite_index': 0,
         'sprite_array': null,
         'sprite': function(p) {
-            if (p.facing == 1) {
+            if (p.facing === 1) {
                 p.sprite_array = sprites.player_right;
             } else {
                 p.sprite_array = sprites.player_left;
             }
-            if (p.xspeed == 0) {
+            if (p.xspeed === 0) {
                 return p.sprite_array[p.sprite_index];
             } else {
                 return animated_sprite(p);
@@ -191,8 +191,8 @@
     var monsters = [];
 
     var collides = function(o1, o2) {
-        if ((o1.moving_platform_id != null) &&
-            (o2.moving_platform_id != null) &&
+        if ((o1.moving_platform_id !== undefined) &&
+            (o2.moving_platform_id !== undefined) &&
             (o1.moving_platform_id == o2.moving_platform_id)) {
             return false;
         }
@@ -203,7 +203,7 @@
             return true;
         }
         return false;
-    }
+    };
     var collides_with_platforms = function(obj) {
         for (var i = 0; i < platforms.length; ++i) {
             if (collides(obj, platforms[i])) {
@@ -213,7 +213,7 @@
         }
         // console.log("no bump");
         return false;
-    }
+    };
     var collectibles = [];
     var collides_with_collectibles = function(obj) {
         for (var i = 0; i < collectibles.length; ++i) {
@@ -222,10 +222,10 @@
             }
         }
         return false;
-    }
+    };
 
     var clear = function (bx, by, len) {
-        for (dx = 0; dx < len; ++dx) {
+        for (var dx = 0; dx < len; ++dx) {
             if (collides_with_platforms(new_platform(bx+dx, by, null))) {
                 return false;
             }
@@ -242,7 +242,7 @@
             }
         }
         return true;
-    }
+    };
     var legal_platform = function(len, despawn) {
         var bx;
         var by;
@@ -250,7 +250,7 @@
             bx = Math.floor(Math.random() * (bwidth - len));
             by = Math.floor(Math.random() * bheight);
         } while (! clear(bx, by, len));
-        new_platforms = [];
+        var new_platforms = [];
         for (var dx = 0; dx < len; ++dx) {
             new_platforms.push(new_platform(bx+dx, by, despawn));
         }
@@ -283,7 +283,7 @@
         };
         var len = scaled_platform_length(f);
         var despawn = scaled_platform_despawn(f);
-        new_platforms = legal_platform(len, despawn);
+        var new_platforms = legal_platform(len, despawn);
         // console.log(new_platforms);
         for (var i = 0; i < new_platforms.length; ++i) {
             new_platforms[i].moving_platform_id = moving_platform.id;
@@ -293,12 +293,12 @@
         //console.log(platforms);
         moving_platforms.push(moving_platform);
         //console.log(moving_platforms);
-    }
+    };
 
     for (var i = -8; i < 0; ++i) {
         add_moving_platform(i);
     }
-    for (var i = 0; i < 18; ++i) {
+    for (var pi = 0; pi < 18; ++pi) {
         add_platform(0);
     }
 
@@ -311,7 +311,7 @@
         platforms = platforms.filter(function(p) {
             return ((! p.despawn_frame) || (p.despawn_frame > frameno));
         });
-    }
+    };
     var maybe_spawn_platforms = function () {
         if (Math.random() < 0.006) {
             if (Math.random() < 0.21) {
@@ -340,7 +340,7 @@
 
     var spawn = function(obj) {
         do {
-            platform = platforms[Math.floor(Math.random() * platforms.length)];
+            var platform = platforms[Math.floor(Math.random() * platforms.length)];
             obj.x = platform.x;
             obj.y = platform.y - obj.height;
         } while ((obj.y < 0) || collides_with_platforms(obj) || (! collides_with_platforms(under_feet(obj))));
@@ -364,12 +364,12 @@
             player.yspeed = 0;
             player.facing = 1;
             spawn(player);
-            sounds["spawn"].load();
-            sounds["spawn"].volume = 0.1;
-            sounds["spawn"].play();
+            sounds.spawn.load();
+            sounds.spawn.volume = 0.1;
+            sounds.spawn.play();
             bullseyes.push(new_bullseye(player.x + player.width / 2, player.y + player.height / 2, 120, "#00FF00"));
         }
-    }
+    };
 
     var move = function(obj) {
         // are we falling?
@@ -406,9 +406,9 @@
 
         // up-down physics
         if ((! in_the_air) && (obj.press_jump)) {
-            sounds["jump"].load();
-            sounds["jump"].volume = 0.1;
-            sounds["jump"].play();
+            sounds.jump.load();
+            sounds.jump.volume = 0.1;
+            sounds.jump.play();
             obj.press_jump = false;
             obj.yspeed = obj.jump;
         }
@@ -482,9 +482,9 @@
         }
         for (var ci = 0; ci < collectibles.length; ++ci) {
             if ((! collectibles[ci].gone) && (collides(player, collectibles[ci]))) {
-                sounds["collect"].load();
-                sounds["collect"].volume = 0.1;
-                sounds["collect"].play();
+                sounds.collect.load();
+                sounds.collect.volume = 0.1;
+                sounds.collect.play();
                 ++player.collectible_counter;
                 collectibles[ci].gone = true;
             }
@@ -492,7 +492,7 @@
     };
 
     var animated_sprite = function(m) {
-        if ((frameno % m.sprite_speed) == 0) {
+        if ((frameno % m.sprite_speed) === 0) {
             ++m.sprite_index;
             if (m.sprite_index >= m.sprite_array.length) {
                 m.sprite_index = 0;
@@ -501,11 +501,11 @@
         return m.sprite_array[m.sprite_index];
     };
 
-    var dork_ai = function(obj) {};
+    var dork_ai = function() {};
     var monster_kill = function(m) {
-        sounds["kill"].load();
-        sounds["kill"].volume = 0.1;
-        sounds["kill"].play();
+        sounds.kill.load();
+        sounds.kill.volume = 0.1;
+        sounds.kill.play();
         make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
         m.dead = true;
     };
@@ -544,7 +544,7 @@
             obj.press_right = false;
             obj.press_left = true;
         }
-    }
+    };
     var new_goomba = function() {
         return {
             'x': 0,
@@ -567,7 +567,7 @@
             'sprite': animated_sprite,
             'kill': monster_kill,
         };
-    }
+    };
     var paragoomba_ai = function(obj) {
         goomba_ai(obj);
         obj.press_jump = true;
@@ -598,10 +598,10 @@
         };
     };
     var rage = function(obj, distance) {
-        sounds["boss_rage"].load();
-        sounds["boss_rage"].volume = 0.1;
-        sounds["boss_rage"].play();
-        range_obj = {
+        sounds.boss_rage.load();
+        sounds.boss_rage.volume = 0.1;
+        sounds.boss_rage.play();
+        var range_obj = {
             'x': obj.x - distance,
             'y': obj.y - distance,
             'width': obj.width + 2 * distance,
@@ -613,7 +613,7 @@
                 platforms[i].despawn_frame = frameno;
             }
         }
-    }
+    };
     var boss_rage = function(obj) {
         rage(obj, 60);
     };
@@ -642,9 +642,9 @@
             obj.next_rage = frameno + 500 - Math.floor(Math.random() * 50);
         }
         if (obj.cooldown_frame <= frameno) {
-            sounds["enemy_shoot"].load();
-            sounds["enemy_shoot"].volume = 0.1;
-            sounds["enemy_shoot"].play();
+            sounds.enemy_shoot.load();
+            sounds.enemy_shoot.volume = 0.1;
+            sounds.enemy_shoot.play();
             projectiles.push(new_projectile(obj.x + obj.width / 2, obj.y + obj.height, 0, 6.5));
             obj.cooldown_frame = frameno + 5;
         }
@@ -669,9 +669,9 @@
             'health': 25,
             'cooldown_frame': 0,
             'kill': function(m) {
-                sounds["boss_kill"].load();
-                sounds["boss_kill"].volume = 0.1;
-                sounds["boss_kill"].play();
+                sounds.boss_kill.load();
+                sounds.boss_kill.volume = 0.1;
+                sounds.boss_kill.play();
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 2000, 60, "#FF00FF");
                 m.dead = true;
             },
@@ -702,9 +702,9 @@
     var sniper_ai = function(obj) {
         if ((player.y > (obj.y - 2)) && (player.y < (obj.y + obj.height))) {
             if (obj.cooldown_frame <= frameno) {
-                sounds["enemy_shoot"].load();
-                sounds["enemy_shoot"].volume = 0.1;
-                sounds["enemy_shoot"].play();
+                sounds.enemy_shoot.load();
+                sounds.enemy_shoot.volume = 0.1;
+                sounds.enemy_shoot.play();
                 var x;
                 var dx;
                 if (player.x > obj.x) {
@@ -744,7 +744,7 @@
         };
     };
     var mine_ai = function(obj) {
-        range_obj = {
+        var range_obj = {
             'x': obj.x - 30,
             'y': obj.y - 30,
             'width': obj.width + 2 * 30,
@@ -851,7 +851,7 @@
     var monster_spawn_frame = 0;
     var maybe_spawn_monsters = function() {
         if (monster_spawn_frame <= frameno) {
-            constructors = [ new_dork, new_mine ];
+            var constructors = [ new_dork, new_mine ];
             if (frameno > 1800) {
                 constructors.push(new_sniper);
                 constructors.push(new_goomba);
@@ -860,12 +860,12 @@
                 constructors.push(new_paragoomba);
                 constructors.push(new_pod);
             }
-            constructor = constructors[Math.floor(Math.random() * constructors.length)];
-            new_monster = spawn(constructor());
+            var constructor = constructors[Math.floor(Math.random() * constructors.length)];
+            var new_monster = spawn(constructor());
             monsters.push(new_monster);
-            sounds["enemy_spawn"].load();
-            sounds["enemy_spawn"].volume = 0.1;
-            sounds["enemy_spawn"].play();
+            sounds.enemy_spawn.load();
+            sounds.enemy_spawn.volume = 0.1;
+            sounds.enemy_spawn.play();
             bullseyes.push(new_bullseye(new_monster.x + new_monster.width / 2, new_monster.y + new_monster.height / 2, 30, "#FF00FF"));
             monster_spawn_frame = frameno + Math.floor(Math.random() * 500) + 100;
         }
@@ -884,7 +884,7 @@
 
     var game_over = false;
     var maybe_win_the_game = function() {
-        dead_bosses = monsters.filter(function(m) {
+        var dead_bosses = monsters.filter(function(m) {
             return (m.dead && m.boss);
         });
         if (dead_bosses.length > 0) {
@@ -899,12 +899,12 @@
             'height': 8,
             'width': 8,
             'gone': false,
-            'sprite': function(obj) {
-                return sprites["collectible"];
+            'sprite': function() {
+                return sprites.collectible;
             }
         };
     };
-    for (var i = 0; i < 20; ++i) {
+    for (var ci = 0; ci < 20; ++ci) {
         collectibles.push(air_spawn(new_collectible()));
     }
 
@@ -913,7 +913,7 @@
             collectibles = collectibles.filter(function(c) {
                 return (! c.gone);
             });
-            if (collectibles.length == 0) {
+            if (collectibles.length === 0) {
                 monsters.push(air_spawn(new_boss()));
             }
         }
@@ -990,9 +990,9 @@
     var projectiles = [];
     var shots_fired = function () {
         if ((player.cooldown_frame <= frameno) && (player.press_shoot)) {
-            sounds["shoot"].load();
-            sounds["shoot"].volume = 0.1;
-            sounds["shoot"].play();
+            sounds.shoot.load();
+            sounds.shoot.volume = 0.1;
+            sounds.shoot.play();
             if (player.facing == 1) {
                 make_particles(player.x + player.width, player.y + player.height / 2, 10, 5, "#FF00FF");
                 projectiles.push(new_projectile(player.x + player.width, player.y + player.height / 2, 6.5, 0));
@@ -1004,20 +1004,21 @@
         }
     };
     var move_projectiles = function() {
-        for (var i = 0; i < projectiles.length; ++i) {
+        var i;
+        for (i = 0; i < projectiles.length; ++i) {
             projectiles[i].x += projectiles[i].dx;
             projectiles[i].y += projectiles[i].dy;
         }
-        for (var i = 0; i < projectiles.length; ++i) {
+        for (i = 0; i < projectiles.length; ++i) {
             if (! projectiles[i].remove) {
                 if ((! player.dead) && (collides(projectiles[i], player))) {
                     player.kill(player);
                 }
                 for (var mi = 0; mi < monsters.length; ++mi) {
                     if (collides(projectiles[i], monsters[mi])) {
-                        sounds["hit"].load();
-                        sounds["hit"].volume = 0.1;
-                        sounds["hit"].play();
+                        sounds.hit.load();
+                        sounds.hit.volume = 0.1;
+                        sounds.hit.play();
                         // console.log("hit frameno=" + frameno + ", mi=" + mi + ", i=" + i + ".... health=" + monsters[mi].health);
                         --monsters[mi].health;
                         projectiles[i].remove = true;
@@ -1044,8 +1045,8 @@
             }
         }
         if (slide_obj) {
-            new_x = obj.x + mp.dx;
-            new_y = obj.y + mp.dy;
+            var new_x = obj.x + mp.dx;
+            var new_y = obj.y + mp.dy;
             if (! collides_with_platforms(new_obj_at(obj, new_x, new_y, mp.id))) {
                 obj.x = new_x;
                 obj.y = new_y;
@@ -1053,15 +1054,17 @@
         }
     };
     var maybe_shove = function(shover, obj, dy, dx) {
+        var mdx;
+        var mdy;
         if (dy > 0) {
-            var mdy = Math.abs(dy);
+            mdy = Math.abs(dy);
             while ((mdy > 0) && (collides(shover, obj))) {
                 //console.log("adjust down!");
                 ++obj.y;
                 --mdy;
             }
         } else if (dy < 0) {
-            var mdy = Math.abs(dy);
+            mdy = Math.abs(dy);
             while ((mdy > 0) && (collides(shover, obj))) {
                 //console.log("adjust up!");
                 --obj.y;
@@ -1069,14 +1072,14 @@
             }
         }
         if (dx > 0) {
-            var mdx = Math.abs(dx);
+            mdx = Math.abs(dx);
             while ((mdx > 0) && (collides(shover, obj))) {
                 //console.log("adjust right!");
                 ++obj.x;
                 --mdx;
             }
         } else if (dx < 0) {
-            var mdx = Math.abs(dx);
+            mdx = Math.abs(dx);
             while ((mdx > 0) && (collides(shover, obj))) {
                 //console.log("adjust left!");
                 --obj.x;
@@ -1088,8 +1091,9 @@
         for (var i = 0; i < moving_platforms.length; ++i) {
             var mp = moving_platforms[i];
             var collision = false;
+            var j;
             // check for bounce
-            for (var j = 0; j < platforms.length; ++j) {
+            for (j = 0; j < platforms.length; ++j) {
                 if (platforms[j].moving_platform_id == mp.id) {
                     if (collides_with_platforms(new_obj_at(platforms[j], platforms[j].x + mp.dx, platforms[j].y + mp.dy))) {
                         mp.dx *= -1;
@@ -1109,15 +1113,15 @@
             }
 
             // apply motion
-            for (var j = 0; j < platforms.length; ++j) {
+            for (j = 0; j < platforms.length; ++j) {
                 if (platforms[j].moving_platform_id == mp.id) {
                     platforms[j].x += mp.dx;
                     platforms[j].y += mp.dy;
 
                     // shove things if necessary
                     maybe_shove(platforms[j], player, mp.dy, mp.dx);
-                    for (var mi = 0; mi < monsters.length; ++mi) {
-                        maybe_shove(platforms[j], monsters[mi], mp.dy, mp.dx);
+                    for (var mix = 0; mix < monsters.length; ++mix) {
+                        maybe_shove(platforms[j], monsters[mix], mp.dy, mp.dx);
                     }
                 }
             }
@@ -1153,24 +1157,20 @@
             case 65:
                 player.press_left = true;
                 return false;
-                break;
             case 39:
             case 68:
                 player.press_right = true;
                 return false;
-                break;
             case 38:
             case 32:
                 player.unpress_jump = false;
                 player.press_jump = true;
                 return false;
-                break;
             case 16:
             case 88:
                 player.press_shoot = true;
                 return false;
-                break;
-        };
+        }
     };
     var keyup = function (e) {
         switch (e.keyCode) {
@@ -1178,24 +1178,20 @@
             case 65:
                 player.press_left = false;
                 return false;
-                break;
             case 39:
             case 68:
                 player.press_right = false;
                 return false;
-                break;
             case 38:
             case 32:
                 player.unpress_jump = true;
                 player.press_jump = false;
                 return false;
-                break;
             case 16:
             case 88:
                 player.press_shoot = false;
                 return false;
-                break;
-        };
+        }
     };
     $(document).keydown(keydown);
     $(document).keyup(keyup);
@@ -1225,34 +1221,34 @@
         };
 
         // render collectibles
-        for (var i = 0; i < collectibles.length; ++i) {
-            if (! collectibles[i].gone) {
-                dsp(collectibles[i]);
+        for (var ci = 0; ci < collectibles.length; ++ci) {
+            if (! collectibles[ci].gone) {
+                dsp(collectibles[ci]);
             }
         }
 
         // render platforms
-        for (var i = 0; i < platforms.length; ++i) {
+        for (var pi = 0; pi < platforms.length; ++pi) {
             var alpha = 1.0;
-            if (platforms[i].despawn_frame) {
-                alpha = Math.min(1.0, (platforms[i].despawn_frame - frameno) / 100);
+            if (platforms[pi].despawn_frame) {
+                alpha = Math.min(1.0, (platforms[pi].despawn_frame - frameno) / 100);
             }
-            dsp(platforms[i], alpha);
+            dsp(platforms[pi], alpha);
         }
 
         // render projectiles
-        for (var i = 0; i < projectiles.length; ++i) {
+        for (var ri = 0; ri < projectiles.length; ++ri) {
             ctx.fillStyle = "#00FFFF";
-            ctx.fillRect(projectiles[i].x + offset_left, projectiles[i].y + offset_top, projectiles[i].width, projectiles[i].height);
+            ctx.fillRect(projectiles[ri].x + offset_left, projectiles[ri].y + offset_top, projectiles[ri].width, projectiles[ri].height);
         }
 
         // render bullseyes
-        for (var i = 0; i < bullseyes.length; ++i) {
-            if (bullseyes[i].r > 0) {
-                ctx.strokeStyle = bullseyes[i].color;
+        for (var bi = 0; bi < bullseyes.length; ++bi) {
+            if (bullseyes[bi].r > 0) {
+                ctx.strokeStyle = bullseyes[bi].color;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(bullseyes[i].x + offset_left, bullseyes[i].y + offset_top, bullseyes[i].r, 0, 2*Math.PI);
+                ctx.arc(bullseyes[bi].x + offset_left, bullseyes[bi].y + offset_top, bullseyes[bi].r, 0, 2*Math.PI);
                 ctx.stroke();
             }
         }
@@ -1263,21 +1259,16 @@
         }
 
         // render monsters
-        for (var i = 0; i < monsters.length; ++i) {
-            if (! monsters[i].dead) {
-                if (monsters[i].sprite) {
-                    dsp(monsters[i]);
-                } else {
-                    ctx.fillStyle = "#FF00FF";
-                    ctx.fillRect(monsters[i].x + offset_left, monsters[i].y + offset_top, monsters[i].width, monsters[i].height);
-                }
+        for (var mi = 0; mi < monsters.length; ++mi) {
+            if (! monsters[mi].dead) {
+                dsp(monsters[mi]);
             }
         }
 
         // render particles
-        for (var i = 0; i < particles.length; ++i) {
-            ctx.fillStyle = particles[i].color;
-            ctx.fillRect(particles[i].x + offset_left, particles[i].y + offset_top, 2, 2);
+        for (var ai = 0; ai < particles.length; ++ai) {
+            ctx.fillStyle = particles[ai].color;
+            ctx.fillRect(particles[ai].x + offset_left, particles[ai].y + offset_top, 2, 2);
         }
 
         if (game_over) {
@@ -1299,7 +1290,7 @@
     var delta = 0;
     var last = window.performance.now();
     var frame = function () {
-        now = window.performance.now();
+        var now = window.performance.now();
         delta = delta + Math.min(1, (now - last) / 1000);
         while (delta > STEP) {
             delta = delta - STEP;
