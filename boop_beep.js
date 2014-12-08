@@ -30,6 +30,8 @@
         "sniper_left": new Image(),
         "sniper_right": new Image(),
         "mine": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+        "pod": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+        "podling": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
     }
 
     sprites.collectible.src = "collectible.png";
@@ -82,6 +84,22 @@
     sprites.mine[5].src = "mine6.png";
     sprites.mine[6].src = "mine7.png";
     sprites.mine[7].src = "mine8.png";
+    sprites.pod[0].src = "pod1.png";
+    sprites.pod[1].src = "pod2.png";
+    sprites.pod[2].src = "pod3.png";
+    sprites.pod[3].src = "pod4.png";
+    sprites.pod[4].src = "pod5.png";
+    sprites.pod[5].src = "pod6.png";
+    sprites.podling[0].src = "podling1.png";
+    sprites.podling[1].src = "podling2.png";
+    sprites.podling[2].src = "podling3.png";
+    sprites.podling[3].src = "podling4.png";
+    sprites.podling[4].src = "podling5.png";
+    sprites.podling[5].src = "podling6.png";
+    sprites.podling[6].src = "podling7.png";
+    sprites.podling[7].src = "podling8.png";
+    sprites.podling[8].src = "podling9.png";
+    sprites.podling[9].src = "podling10.png";
 
     sounds["bg"].load();
     sounds["bg"].loop = true;
@@ -791,6 +809,10 @@
             'ai': podling_ai,
             'health': 1,
             'kill': monster_kill,
+            'sprite_speed': 2,
+            'sprite_index': 0,
+            'sprite_array': sprites.podling,
+            'sprite': animated_sprite,
         };
     };
     var pod_kill = function(m) {
@@ -819,6 +841,10 @@
             'ai': goomba_ai,
             'health': 1,
             'kill': pod_kill,
+            'sprite_speed': 12,
+            'sprite_index': 0,
+            'sprite_array': sprites.pod,
+            'sprite': animated_sprite,
         };
     };
 
