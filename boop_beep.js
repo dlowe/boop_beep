@@ -647,7 +647,7 @@
             'squish': function(m) {
                 boss_rage(m);
                 if (collides_with_platforms(m)) {
-                    console.log("adjusting boss");
+                    // console.log("adjusting boss");
                     if (m.x < (WIDTH / 2)) {
                         ++m.x;
                     } else {
@@ -816,7 +816,6 @@
                         --monsters[mi].health;
                         projectiles[i].remove = true;
                         if (monsters[mi].health <= 0) {
-                            // TODO: event: kill!
                             monsters[mi].kill(monsters[mi]);
                         }
                     }
