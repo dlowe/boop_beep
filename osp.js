@@ -22,6 +22,9 @@
         "platform": new Image(),
         "dork": [ new Image(), new Image(), new Image(), new Image() ],
         "goomba": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+        "boss": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+        "player_right": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+        "player_left": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
     }
 
     sprites.collectible.src = "collectible.png";
@@ -38,6 +41,32 @@
     sprites.goomba[5].src = "goomba6.png";
     sprites.goomba[6].src = "goomba7.png";
     sprites.goomba[7].src = "goomba8.png";
+    sprites.boss[0].src = "boss1.png";
+    sprites.boss[1].src = "boss2.png";
+    sprites.boss[2].src = "boss3.png";
+    sprites.boss[3].src = "boss4.png";
+    sprites.boss[4].src = "boss5.png";
+    sprites.boss[5].src = "boss6.png";
+    sprites.boss[6].src = "boss7.png";
+    sprites.boss[7].src = "boss8.png";
+    sprites.boss[8].src = "boss9.png";
+    sprites.boss[9].src = "boss10.png";
+    sprites.player_right[0].src = "player_right1.png";
+    sprites.player_right[1].src = "player_right2.png";
+    sprites.player_right[2].src = "player_right3.png";
+    sprites.player_right[3].src = "player_right4.png";
+    sprites.player_right[4].src = "player_right5.png";
+    sprites.player_right[5].src = "player_right6.png";
+    sprites.player_right[6].src = "player_right7.png";
+    sprites.player_right[7].src = "player_right8.png";
+    sprites.player_left[0].src = "player_left1.png";
+    sprites.player_left[1].src = "player_left2.png";
+    sprites.player_left[2].src = "player_left3.png";
+    sprites.player_left[3].src = "player_left4.png";
+    sprites.player_left[4].src = "player_left5.png";
+    sprites.player_left[5].src = "player_left6.png";
+    sprites.player_left[6].src = "player_left7.png";
+    sprites.player_left[7].src = "player_left8.png";
 
     sounds["bg"].load();
     sounds["bg"].loop = true;
@@ -106,7 +135,22 @@
             ++p.death_counter;
             p.respawn_frame = frameno + 20;
             make_particles(p.x + p.width / 2, p.y + p.height / 2, 1400, 19, "#00FF00");
-        }
+        },
+        'sprite_speed': 2,
+        'sprite_index': 0,
+        'sprite_array': null,
+        'sprite': function(p) {
+            if (p.facing == 1) {
+                p.sprite_array = sprites.player_right;
+            } else {
+                p.sprite_array = sprites.player_left;
+            }
+            if (p.xspeed == 0) {
+                return p.sprite_array[p.sprite_index];
+            } else {
+                return animated_sprite(p);
+            }
+        },
     };
     var monsters = [];
 
@@ -587,6 +631,10 @@
             },
             'next_rage': frameno,
             'flying': true,
+            'sprite_speed': 15,
+            'sprite_index': 0,
+            'sprite_array': sprites.boss,
+            'sprite': animated_sprite,
         };
     };
 
@@ -901,7 +949,7 @@
     var ctx = c.getContext("2d");
     var render = function () {
         // clear
-        ctx.fillStyle = "#666666";
+        ctx.fillStyle = "#333333";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
         var dsp = function(obj, alpha) {
@@ -941,8 +989,7 @@
 
         // render player
         if (! player.dead) {
-            ctx.fillStyle = "#00FF00";
-            ctx.fillRect(player.x + offset_left, player.y + offset_top, player.width, player.height);
+            dsp(player);
         }
 
         // render monsters
