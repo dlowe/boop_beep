@@ -754,11 +754,6 @@
         };
     };
 
-    monsters.push(spawn(new_mine()));
-    monsters.push(spawn(new_mine()));
-    monsters.push(spawn(new_mine()));
-    monsters.push(spawn(new_mine()));
-
     var monster_spawn_frame = 0;
     var maybe_spawn_monsters = function() {
         if (monster_spawn_frame <= frameno) {
