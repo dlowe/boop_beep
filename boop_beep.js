@@ -243,7 +243,7 @@
         return f + Math.floor(Math.random() * 9000) + Math.max(200, (500 - (500 * (f / 28800))));
     };
     var scaled_platform_speed = function(f) {
-        return Math.floor(Math.random() * 1.6) + Math.min(0.25, (f / 28800));
+        return Math.floor(Math.random() * 1.6) + Math.max(0.25, (f / 28800));
     };
     var add_platform = function (f) {
         var len = scaled_platform_length(f);
