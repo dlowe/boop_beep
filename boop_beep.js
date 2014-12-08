@@ -1206,6 +1206,15 @@
         ctx.fillStyle = "#333333";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+        if (frameno < 600) {
+            ctx.globalAlpha = 1.0 - (frameno / 600);
+            ctx.fillStyle = "#000000";
+            ctx.font = "100px Impact";
+            ctx.fillText("COLLECT BOOPS!", WIDTH/2 - 270, HEIGHT / 2 - 100);
+            ctx.fillText("KILL BEEPS!", WIDTH/2 - 180, HEIGHT / 2);
+            ctx.globalAlpha = 1.0;
+        }
+
         var dsp = function(obj, alpha) {
             if (alpha === undefined) {
                 alpha = 1.0;
@@ -1236,10 +1245,6 @@
             ctx.fillStyle = "#00FFFF";
             ctx.fillRect(projectiles[i].x + offset_left, projectiles[i].y + offset_top, projectiles[i].width, projectiles[i].height);
         }
-
-        ctx.fillStyle = "#000000";
-        ctx.font = "14px Impact";
-        ctx.fillText("DEATHS: " + player.death_counter, WIDTH - 68, 16);
 
         // render bullseyes
         for (var i = 0; i < bullseyes.length; ++i) {
@@ -1278,7 +1283,16 @@
         if (game_over) {
             ctx.fillStyle = "#000000";
             ctx.font = "100px Impact";
-            ctx.fillText("YOU WIN!", WIDTH / 2 - 170, HEIGHT / 2);
+            ctx.fillText("YOU WON!", WIDTH / 2 - 170, HEIGHT / 2);
+            if (player.death_counter > 0) {
+                ctx.fillStyle = "#000000";
+                ctx.font = "80px Impact";
+                ctx.fillText("... BUT YOU DIED " + player.death_counter + " TIMES!", WIDTH/2 - 360, HEIGHT/2 + 100);
+            } else {
+                    ctx.fillStyle = "#000000";
+                    ctx.font = "80px Impact";
+                    ctx.fillText("PERFECT!!!!!1", WIDTH/2 - 190, HEIGHT/2 + 100);
+            }
         }
     };
     var STEP = 1/60;
