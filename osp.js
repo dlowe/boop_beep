@@ -692,7 +692,7 @@
     };
     var collectibles = [];
 
-    for (var i = 0; i < 1; ++i) {
+    for (var i = 0; i < 20; ++i) {
         collectibles.push(air_spawn(new_collectible()));
     }
 
