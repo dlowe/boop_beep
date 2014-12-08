@@ -867,7 +867,7 @@
             sounds["enemy_spawn"].volume = 0.1;
             sounds["enemy_spawn"].play();
             bullseyes.push(new_bullseye(new_monster.x + new_monster.width / 2, new_monster.y + new_monster.height / 2, 30, "#FF00FF"));
-            monster_spawn_frame = frameno + Math.floor(Math.random() * 600) + 200;
+            monster_spawn_frame = frameno + Math.floor(Math.random() * 500) + 100;
         }
     };
     var move_monsters = function() {
