@@ -99,7 +99,7 @@
     };
     for (var bx = 0; bx < bwidth; ++bx) {
         platforms.push(new_platform(bx, 0, null, true));
-        platforms.push(new_platform(bx, bheight - 1, Math.floor((Math.random() * 9000) + 1000)));
+        platforms.push(new_platform(bx, bheight - 1, null, false)); // floor is not indestructible!
     }
     for (var by = 0; by < bheight; ++by) {
         platforms.push(new_platform(0, by, null, true));
@@ -221,24 +221,33 @@
         }
         return new_platforms;
     };
+    var scaled_platform_length = function(f) {
+        return Math.floor(Math.random() * 5) + Math.max(2, (5 - (5 * (f / 28800))));
+    };
+    var scaled_platform_despawn = function(f) {
+        return f + Math.floor(Math.random() * 9000) + Math.max(200, (500 - (500 * (f / 28800))));
+    };
+    var scaled_platform_speed = function(f) {
+        return Math.floor(Math.random() * 1.6) + Math.min(0.25, (f / 28800));
+    };
     var add_platform = function (f) {
-        var len = Math.floor(Math.random() * 10) + 1;
-        var despawn = f + Math.floor((Math.random() * 9000) + 500);
+        var len = scaled_platform_length(f);
+        var despawn = scaled_platform_despawn(f);
         platforms = platforms.concat(legal_platform(len, despawn));
     };
     var moving_platforms = [];
     var add_moving_platform = function (f) {
-        var vertical = (Math.random() < 0.5) ? true : false;
+        var vertical = (Math.random() < 0.59) ? true : false;
         var horizontal = ! vertical;
         var backwards = (Math.random() < 0.5) ? true : false;
-        var speed = (Math.random() * 1.5) + 0.25;
+        var speed = scaled_platform_speed(f);
         var moving_platform = {
                 'id': f,
                 'dx': (backwards ? -1 : 1) * (horizontal ? 1 : 0) * speed,
                 'dy': (backwards ? -1 : 1) * (vertical ? 1 : 0) * speed
         };
-        var len = Math.floor(Math.random() * 10) + 1;
-        var despawn = f + Math.floor((Math.random() * 9000) + 500);
+        var len = scaled_platform_length(f);
+        var despawn = scaled_platform_despawn(f);
         new_platforms = legal_platform(len, despawn);
         // console.log(new_platforms);
         for (var i = 0; i < new_platforms.length; ++i) {
@@ -251,10 +260,10 @@
         //console.log(moving_platforms);
     }
 
-    for (var i = -10; i < 0; ++i) {
+    for (var i = -8; i < 0; ++i) {
         add_moving_platform(i);
     }
-    for (var i = 0; i < 20; ++i) {
+    for (var i = 0; i < 18; ++i) {
         add_platform(0);
     }
 
@@ -271,8 +280,8 @@
         });
     }
     var maybe_spawn_platforms = function () {
-        if (Math.random() < 0.004) {
-            if (Math.random() < 0.2) {
+        if (Math.random() < 0.006) {
+            if (Math.random() < 0.21) {
                 add_moving_platform(frameno);
             } else {
                 add_platform(frameno);
