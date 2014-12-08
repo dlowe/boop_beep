@@ -17,6 +17,28 @@
         "dead": new Audio("dead.mp3"),
     };
 
+    var sprites = {
+        "collectible": new Image(),
+        "platform": new Image(),
+        "dork": [ new Image(), new Image(), new Image(), new Image() ],
+        "goomba": [ new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image(), new Image() ],
+    }
+
+    sprites.collectible.src = "collectible.png";
+    sprites.platform.src = "platform.png";
+    sprites.dork[0].src = "dork1.png";
+    sprites.dork[1].src = "dork2.png";
+    sprites.dork[2].src = "dork3.png";
+    sprites.dork[3].src = "dork4.png";
+    sprites.goomba[0].src = "goomba1.png";
+    sprites.goomba[1].src = "goomba2.png";
+    sprites.goomba[2].src = "goomba3.png";
+    sprites.goomba[3].src = "goomba4.png";
+    sprites.goomba[4].src = "goomba5.png";
+    sprites.goomba[5].src = "goomba6.png";
+    sprites.goomba[6].src = "goomba7.png";
+    sprites.goomba[7].src = "goomba8.png";
+
     sounds["bg"].load();
     sounds["bg"].loop = true;
     sounds["bg"].play();
@@ -41,6 +63,9 @@
             'width': BLOCK_WIDTH,
             'despawn_frame': despawn_frame,
             'indestructable': indestructable,
+            'sprite': function(obj) {
+                return sprites["platform"];
+            },
         };
     };
     for (var bx = 0; bx < bwidth; ++bx) {
@@ -366,6 +391,16 @@
         }
     };
 
+    var animated_sprite = function(m) {
+        if ((frameno % m.sprite_speed) == 0) {
+            ++m.sprite_index;
+            if (m.sprite_index >= m.sprite_array.length) {
+                m.sprite_index = 0;
+            }
+        }
+        return m.sprite_array[m.sprite_index];
+    };
+
     var dork_ai = function(obj) {};
     var new_dork = function() {
         return {
@@ -385,6 +420,10 @@
                 make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
                 m.dead = true;
             },
+            'sprite_speed': 10,
+            'sprite_index': 0,
+            'sprite_array': sprites.dork,
+            'sprite': animated_sprite,
         };
     };
     var goomba_ai = function(obj) {
@@ -420,6 +459,10 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'health': 2,
+            'sprite_speed': 2,
+            'sprite_index': 0,
+            'sprite_array': sprites.goomba,
+            'sprite': animated_sprite,
             'kill': function(m) {
                 sounds["kill"].load();
                 sounds["kill"].volume = 0.1;
@@ -428,7 +471,7 @@
                 m.dead = true;
             },
         };
-    };
+    }
     var paragoomba_ai = function(obj) {
         goomba_ai(obj);
         obj.press_jump = true;
@@ -448,6 +491,10 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'health': 2,
+            'sprite_speed': 2,
+            'sprite_index': 0,
+            'sprite_array': sprites.goomba,
+            'sprite': animated_sprite,
             'kill': function(m) {
                 sounds["kill"].load();
                 sounds["kill"].volume = 0.1;
@@ -577,7 +624,10 @@
             'y': 0,
             'height': 8,
             'width': 8,
-            'gone': false
+            'gone': false,
+            'sprite': function(obj) {
+                return sprites["collectible"];
+            }
         };
     };
     var collectibles = [];
@@ -851,25 +901,32 @@
     var ctx = c.getContext("2d");
     var render = function () {
         // clear
-        ctx.fillStyle = "#999999";
+        ctx.fillStyle = "#666666";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        var dsp = function(obj, alpha) {
+            if (alpha === undefined) {
+                alpha = 1.0;
+            }
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(obj.sprite(obj), obj.x + offset_left, obj.y + offset_top, obj.width, obj.height);
+            ctx.globalAlpha = 1.0;
+        };
 
         // render collectibles
         for (var i = 0; i < collectibles.length; ++i) {
             if (! collectibles[i].gone) {
-                ctx.fillStyle = "#FFFF00";
-                ctx.fillRect(collectibles[i].x + offset_left, collectibles[i].y + offset_top, collectibles[i].width, collectibles[i].height);
+                dsp(collectibles[i]);
             }
         }
 
         // render platforms
         for (var i = 0; i < platforms.length; ++i) {
-            var saturation = 10;
+            var alpha = 1.0;
             if (platforms[i].despawn_frame) {
-                saturation = 153 - Math.min(143, platforms[i].despawn_frame - frameno);
+                alpha = Math.min(1.0, (platforms[i].despawn_frame - frameno) / 100);
             }
-            ctx.fillStyle = "rgb(153, " + saturation + ", " + saturation + ")";
-            ctx.fillRect(platforms[i].x + offset_left, platforms[i].y + offset_top, platforms[i].width, platforms[i].height);
+            dsp(platforms[i], alpha);
         }
 
         // render projectiles
@@ -878,11 +935,6 @@
             ctx.fillRect(projectiles[i].x + offset_left, projectiles[i].y + offset_top, projectiles[i].width, projectiles[i].height);
         }
 
-        //ctx.fillStyle = "#000000";
-        //ctx.fillText(frameno, 30, 30);
-        //ctx.fillText(player.xspeed, 30, 40);
-        //ctx.fillText(player.yspeed, 30, 50);
-        //ctx.fillText("(" + player.x + ", " + player.y + ")", 30, 60);
         ctx.fillStyle = "#000000";
         ctx.font = "14px Impact";
         ctx.fillText("DEATHS: " + player.death_counter, WIDTH - 68, 16);
@@ -896,8 +948,12 @@
         // render monsters
         for (var i = 0; i < monsters.length; ++i) {
             if (! monsters[i].dead) {
-                ctx.fillStyle = "#FF00FF";
-                ctx.fillRect(monsters[i].x + offset_left, monsters[i].y + offset_top, monsters[i].width, monsters[i].height);
+                if (monsters[i].sprite) {
+                    dsp(monsters[i]);
+                } else {
+                    ctx.fillStyle = "#FF00FF";
+                    ctx.fillRect(monsters[i].x + offset_left, monsters[i].y + offset_top, monsters[i].width, monsters[i].height);
+                }
             }
         }
 
