@@ -124,6 +124,7 @@
         'unpress_jump': false,
         'top_speed': 6,
         'acceleration': 0.05,
+        'deceleration': 0.5,
         'air_acceleration': 0.1,
         'collectible_counter': 0,
         'cooldown_frame': 0,
@@ -248,7 +249,6 @@
     //var meter = new FPSMeter();
 
     var frameno = 0;
-    var DECELERATION = 0.5;
     var FRICTION = 0.15;
     var JUMP = -6.5;
     var UNJUMP = -3.0;
@@ -325,7 +325,7 @@
         if (obj.press_left) {
             obj.facing = -1;
             if (obj.xspeed > 0) {
-                obj.xspeed -= DECELERATION;
+                obj.xspeed -= obj.deceleration;
             } else if (obj.xspeed >= (-obj.top_speed + current_acceleration)) {
                 obj.xspeed = obj.xspeed - current_acceleration;
             } else {
@@ -334,7 +334,7 @@
         } else if (obj.press_right) {
             obj.facing = 1;
             if (obj.xspeed < 0) {
-                obj.xspeed += DECELERATION;
+                obj.xspeed += obj.deceleration;
             } else if (obj.xspeed <= (obj.top_speed - current_acceleration)) {
                 obj.xspeed = obj.xspeed + current_acceleration;
             } else {
@@ -502,6 +502,7 @@
             'top_speed': 1,
             'acceleration': 0.02,
             'air_acceleration': 0.02,
+            'deceleration': 0.5,
             'health': 2,
             'sprite_speed': 2,
             'sprite_index': 0,
@@ -534,6 +535,7 @@
             'top_speed': 1,
             'acceleration': 0.02,
             'air_acceleration': 0.02,
+            'deceleration': 0.5,
             'health': 2,
             'sprite_speed': 2,
             'sprite_index': 0,
@@ -575,11 +577,9 @@
         if (obj.health < obj.last_health) {
             obj.next_rage -= 500;
             if (player.x > obj.x) {
-                console.log("coming right to get you");
                 obj.press_right = true;
                 obj.press_left = false;
             } else {
-                console.log("coming left to get you");
                 obj.press_left = true;
                 obj.press_right = false;
             }
@@ -610,8 +610,9 @@
             'direction': (Math.random() < 0.5) ? 1 : 0,
             'ai': boss_ai,
             'top_speed': 5,
-            'acceleration': 0.02,
-            'air_acceleration': 0.02,
+            'acceleration': 0.05,
+            'air_acceleration': 0.05,
+            'deceleration': 1,
             'last_health': 15,
             'health': 15,
             'cooldown_frame': 0,
