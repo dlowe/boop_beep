@@ -15,6 +15,8 @@
         "enemy_shoot": new Audio("enemy_shoot.mp3"),
         "hit": new Audio("hit.mp3"),
         "dead": new Audio("dead.mp3"),
+        "spawn": new Audio("spawn.mp3"),
+        "enemy_spawn": new Audio("enemy_spawn.mp3"),
     };
 
     var sprites = {
@@ -331,6 +333,9 @@
             player.yspeed = 0;
             player.facing = 1;
             spawn(player);
+            sounds["spawn"].load();
+            sounds["spawn"].volume = 0.1;
+            sounds["spawn"].play();
             bullseyes.push(new_bullseye(player.x + player.width / 2, player.y + player.height / 2, 120, "#00FF00"));
         }
     }
@@ -683,6 +688,9 @@
             constructor = constructors[Math.floor(Math.random() * constructors.length)];
             new_monster = spawn(constructor());
             monsters.push(new_monster);
+            sounds["enemy_spawn"].load();
+            sounds["enemy_spawn"].volume = 0.1;
+            sounds["enemy_spawn"].play();
             bullseyes.push(new_bullseye(new_monster.x + new_monster.width / 2, new_monster.y + new_monster.height / 2, 30, "#FF00FF"));
             monster_spawn_frame = frameno + Math.floor(Math.random() * 600) + 200;
         }
