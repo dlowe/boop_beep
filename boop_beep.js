@@ -1,4 +1,4 @@
-(function osp (c) {
+(function boop_beep (c) {
     var WIDTH = 1024;
     var HEIGHT = 768;
     var BLOCK_HEIGHT = 18;
@@ -257,8 +257,6 @@
     for (var i = 0; i < 20; ++i) {
         add_platform(0);
     }
-
-    //var meter = new FPSMeter();
 
     var frameno = 0;
     var FRICTION = 0.15;
@@ -1042,7 +1040,6 @@
     var delta = 0;
     var last = window.performance.now();
     var frame = function () {
-        //meter.tickStart();
         now = window.performance.now();
         delta = delta + Math.min(1, (now - last) / 1000);
         while (delta > STEP) {
@@ -1051,8 +1048,7 @@
         }
         render();
         last = now;
-        //meter.tick();
         requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
-})(document.getElementById("osp"));
+})(document.getElementById("boop_beep"));
