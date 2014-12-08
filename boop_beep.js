@@ -1,4 +1,5 @@
-(function boop_beep (c) {
+(function boop_beep(c) {
+    'use strict';
     var WIDTH = 1024;
     var HEIGHT = 768;
     var BLOCK_HEIGHT = 18;
@@ -224,7 +225,7 @@
         return false;
     };
 
-    var clear = function (bx, by, len) {
+    var clear = function(bx, by, len) {
         for (var dx = 0; dx < len; ++dx) {
             if (collides_with_platforms(new_platform(bx+dx, by, null))) {
                 return false;
@@ -265,13 +266,13 @@
     var scaled_platform_speed = function(f) {
         return Math.floor(Math.random() * 1.6) + Math.max(0.25, (f / 28800));
     };
-    var add_platform = function (f) {
+    var add_platform = function(f) {
         var len = scaled_platform_length(f);
         var despawn = scaled_platform_despawn(f);
         platforms = platforms.concat(legal_platform(len, despawn));
     };
     var moving_platforms = [];
-    var add_moving_platform = function (f) {
+    var add_moving_platform = function(f) {
         var vertical = (Math.random() < 0.65) ? true : false;
         var horizontal = ! vertical;
         var backwards = (Math.random() < 0.5) ? true : false;
@@ -307,12 +308,12 @@
     var GRAVITY = 0.2;
     var TERMINAL_VELOCITY = 9; // setting to > BLOCK_HEIGHT would be bad ;)
 
-    var maybe_despawn_platforms = function () {
+    var maybe_despawn_platforms = function() {
         platforms = platforms.filter(function(p) {
             return ((! p.despawn_frame) || (p.despawn_frame > frameno));
         });
     };
-    var maybe_spawn_platforms = function () {
+    var maybe_spawn_platforms = function() {
         if (Math.random() < 0.006) {
             if (Math.random() < 0.21) {
                 add_moving_platform(frameno);
@@ -355,7 +356,7 @@
         return obj;
     };
 
-    var maybe_respawn_player = function () {
+    var maybe_respawn_player = function() {
         if (player.respawn_frame <= frameno) {
             // console.log("RESPAWN");
             player.dead = false;
@@ -988,7 +989,7 @@
         };
     };
     var projectiles = [];
-    var shots_fired = function () {
+    var shots_fired = function() {
         if ((player.cooldown_frame <= frameno) && (player.press_shoot)) {
             sounds.shoot.load();
             sounds.shoot.volume = 0.1;
@@ -1128,7 +1129,7 @@
         }
     };
 
-    var update = function () {
+    var update = function() {
         ++frameno;
         move_particles();
         move_bullseyes();
@@ -1151,7 +1152,7 @@
         }
     };
 
-    var keydown = function (e) {
+    var keydown = function(e) {
         switch (e.keyCode) {
             case 37:
             case 65:
@@ -1172,7 +1173,7 @@
                 return false;
         }
     };
-    var keyup = function (e) {
+    var keyup = function(e) {
         switch (e.keyCode) {
             case 37:
             case 65:
@@ -1197,7 +1198,7 @@
     $(document).keyup(keyup);
 
     var ctx = c.getContext("2d");
-    var render = function () {
+    var render = function() {
         // clear
         ctx.fillStyle = "#333333";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -1289,7 +1290,7 @@
     var STEP = 1/60;
     var delta = 0;
     var last = window.performance.now();
-    var frame = function () {
+    var frame = function() {
         var now = window.performance.now();
         delta = delta + Math.min(1, (now - last) / 1000);
         while (delta > STEP) {
