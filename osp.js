@@ -179,10 +179,22 @@
         // console.log("no bump");
         return false;
     }
+    var collectibles = [];
+    var collides_with_collectibles = function(obj) {
+        for (var i = 0; i < collectibles.length; ++i) {
+            if (collides(obj, collectibles[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     var clear = function (bx, by, len) {
         for (dx = 0; dx < len; ++dx) {
             if (collides_with_platforms(new_platform(bx+dx, by, null))) {
+                return false;
+            }
+            if (collides_with_collectibles(new_platform(bx+dx, by, null))) {
                 return false;
             }
             if ((! player.dead) && (collides(player, new_platform(bx+dx, by, null)))) {
@@ -299,7 +311,7 @@
         do {
             obj.x = Math.floor(Math.random() * WIDTH);
             obj.y = Math.floor(Math.random() * HEIGHT);
-        } while (collides_with_platforms(obj));
+        } while ((collides_with_platforms(obj)) || (collides_with_collectibles(obj)));
         return obj;
     };
 
@@ -690,8 +702,6 @@
             }
         };
     };
-    var collectibles = [];
-
     for (var i = 0; i < 20; ++i) {
         collectibles.push(air_spawn(new_collectible()));
     }
