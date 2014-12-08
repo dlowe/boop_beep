@@ -979,7 +979,7 @@
 
         // render projectiles
         for (var i = 0; i < projectiles.length; ++i) {
-            ctx.fillStyle = "#0000FF";
+            ctx.fillStyle = "#00FFFF";
             ctx.fillRect(projectiles[i].x + offset_left, projectiles[i].y + offset_top, projectiles[i].width, projectiles[i].height);
         }
 
