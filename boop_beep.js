@@ -660,12 +660,21 @@
         };
     };
 
-    monsters.push(spawn(new_dork()));
-    monsters.push(spawn(new_dork()));
-    monsters.push(spawn(new_dork()));
-    monsters.push(spawn(new_goomba()));
-    monsters.push(spawn(new_paragoomba()));
-
+    var monster_spawn_frame = 0;
+    var maybe_spawn_monsters = function() {
+        if (monster_spawn_frame <= frameno) {
+            constructors = [ new_dork ];
+            if (frameno > 1800) {
+                constructors.push(new_goomba);
+            }
+            if (frameno > 3600) {
+                constructors.push(new_paragoomba);
+            }
+            constructor = constructors[Math.floor(Math.random() * constructors.length)];
+            monsters.push(spawn(constructor()));
+            monster_spawn_frame = frameno + Math.floor(Math.random() * 600) + 200;
+        }
+    };
     var move_monsters = function() {
         for (var i = 0; i < monsters.length; ++i) {
             monsters[i].ai(monsters[i]);
@@ -905,6 +914,7 @@
         maybe_despawn_collectibles();
         maybe_despawn_particles();
         maybe_spawn_platforms();
+        maybe_spawn_monsters();
         if (player.dead) {
             maybe_respawn_player();
         } else {
