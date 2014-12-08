@@ -577,9 +577,11 @@
         if (obj.health < obj.last_health) {
             obj.next_rage -= 500;
             if (player.x > obj.x) {
+                obj.direction = 1;
                 obj.press_right = true;
                 obj.press_left = false;
             } else {
+                obj.direction = -1;
                 obj.press_left = true;
                 obj.press_right = false;
             }
