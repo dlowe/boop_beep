@@ -137,6 +137,8 @@
         'press_right': false,
         'press_jump': false,
         'unpress_jump': false,
+        'jump': -6.5,
+        'unjump': -3.0,
         'top_speed': 6,
         'acceleration': 0.05,
         'deceleration': 0.5,
@@ -284,8 +286,6 @@
 
     var frameno = 0;
     var FRICTION = 0.15;
-    var JUMP = -6.5;
-    var UNJUMP = -3.0;
     var GRAVITY = 0.2;
     var TERMINAL_VELOCITY = 9; // setting to > BLOCK_HEIGHT would be bad ;)
 
@@ -392,12 +392,12 @@
             sounds["jump"].volume = 0.1;
             sounds["jump"].play();
             obj.press_jump = false;
-            obj.yspeed = JUMP;
+            obj.yspeed = obj.jump;
         }
         if (obj.unpress_jump) {
             obj.unpress_jump = false;
-            if (obj.yspeed < UNJUMP) {
-                obj.yspeed = UNJUMP;
+            if (obj.yspeed < obj.unjump) {
+                obj.yspeed = obj.unjump;
             }
         }
         if ((in_the_air) && (! obj.flying)) {
@@ -569,6 +569,8 @@
             'acceleration': 0.02,
             'air_acceleration': 0.02,
             'deceleration': 0.5,
+            'jump': -6.5,
+            'unjump': -3.0,
             'health': 3,
             'sprite_speed': 2,
             'sprite_index': 0,
@@ -753,6 +755,72 @@
             'sprite': animated_sprite,
         };
     };
+    var podling_ai = function(m) {
+        goomba_ai(m);
+        if (Math.random() < 0.005) {
+            m.press_jump = true;
+        }
+        if (Math.random() < 0.02) {
+            if (player.x > m.x) {
+                m.direction = 1;
+                m.press_right = true;
+                m.press_left = false;
+            } else {
+                m.direction = -1;
+                m.press_right = false;
+                m.press_left = true;
+            }
+        }
+    };
+    var new_podling = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 5,
+            'width': 12,
+            'dead': false,
+            'direction': (Math.random() < 0.5) ? 1 : 0,
+            'top_speed': 5.5,
+            'acceleration': 0.04,
+            'air_acceleration': 0.04,
+            'deceleration': 0.4,
+            'jump': -5,
+            'unjump': -2.5,
+            'ai': podling_ai,
+            'health': 1,
+            'kill': monster_kill,
+        };
+    };
+    var pod_kill = function(m) {
+        monster_kill(m);
+        for (var i = 0; i < 3; ++i) {
+            var podling = new_podling();
+            podling.x = m.x + m.width/2;
+            podling.y = m.y + m.height/2;
+            monsters.push(podling);
+        }
+    };
+    var new_pod = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 30,
+            'width': 30,
+            'dead': false,
+            'direction': (Math.random() < 0.5) ? 1 : 0,
+            'top_speed': 0.5,
+            'acceleration': 0.03,
+            'air_acceleration': 0.03,
+            'deceleration': 0.3,
+            'ai': goomba_ai,
+            'health': 1,
+            'kill': pod_kill,
+        };
+    };
 
     var monster_spawn_frame = 0;
     var maybe_spawn_monsters = function() {
@@ -764,6 +832,7 @@
             }
             if (frameno > 3600) {
                 constructors.push(new_paragoomba);
+                constructors.push(new_pod);
             }
             constructor = constructors[Math.floor(Math.random() * constructors.length)];
             new_monster = spawn(constructor());
