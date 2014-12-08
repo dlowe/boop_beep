@@ -959,25 +959,33 @@
     };
     var maybe_shove = function(shover, obj, dy, dx) {
         if (dy > 0) {
-            while (collides(shover, obj)) {
+            var mdy = Math.abs(dy);
+            while ((mdy > 0) && (collides(shover, obj))) {
                 //console.log("adjust down!");
                 ++obj.y;
+                --mdy;
             }
         } else if (dy < 0) {
-            while (collides(shover, obj)) {
+            var mdy = Math.abs(dy);
+            while ((mdy > 0) && (collides(shover, obj))) {
                 //console.log("adjust up!");
                 --obj.y;
+                --mdy;
             }
         }
         if (dx > 0) {
-            while (collides(shover, obj)) {
+            var mdx = Math.abs(dx);
+            while ((mdx > 0) && (collides(shover, obj))) {
                 //console.log("adjust right!");
                 ++obj.x;
+                --mdx;
             }
         } else if (dx < 0) {
-            while (collides(shover, obj)) {
+            var mdx = Math.abs(dx);
+            while ((mdx > 0) && (collides(shover, obj))) {
                 //console.log("adjust left!");
                 --obj.x;
+                --mdx;
             }
         }
     };
