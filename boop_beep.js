@@ -471,6 +471,13 @@
     };
 
     var dork_ai = function(obj) {};
+    var monster_kill = function(m) {
+        sounds["kill"].load();
+        sounds["kill"].volume = 0.1;
+        sounds["kill"].play();
+        make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
+        m.dead = true;
+    };
     var new_dork = function() {
         return {
             'x': 0,
@@ -482,13 +489,7 @@
             'dead': false,
             'ai': dork_ai,
             'health': 2,
-            'kill': function(m) {
-                sounds["kill"].load();
-                sounds["kill"].volume = 0.1;
-                sounds["kill"].play();
-                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
-                m.dead = true;
-            },
+            'kill': monster_kill,
             'sprite_speed': 10,
             'sprite_index': 0,
             'sprite_array': sprites.dork,
@@ -533,13 +534,7 @@
             'sprite_index': 0,
             'sprite_array': sprites.goomba,
             'sprite': animated_sprite,
-            'kill': function(m) {
-                sounds["kill"].load();
-                sounds["kill"].volume = 0.1;
-                sounds["kill"].play();
-                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
-                m.dead = true;
-            },
+            'kill': monster_kill,
         };
     }
     var paragoomba_ai = function(obj) {
@@ -566,13 +561,7 @@
             'sprite_index': 0,
             'sprite_array': sprites.goomba,
             'sprite': animated_sprite,
-            'kill': function(m) {
-                sounds["kill"].load();
-                sounds["kill"].volume = 0.1;
-                sounds["kill"].play();
-                make_particles(m.x + (m.width / 2), m.y + (m.height / 2), 100, 10, "#FF00FF");
-                m.dead = true;
-            },
+            'kill': monster_kill,
         };
     };
     var boss_rage = function(obj) {
@@ -674,12 +663,52 @@
             'sprite': animated_sprite,
         };
     };
+    var sniper_ai = function(obj) {
+        if ((player.y > (obj.y - 2)) && (player.y < (obj.y + obj.height))) {
+            if (obj.cooldown_frame <= frameno) {
+                sounds["enemy_shoot"].load();
+                sounds["enemy_shoot"].volume = 0.1;
+                sounds["enemy_shoot"].play();
+                var x;
+                var dx;
+                if (player.x > obj.x) {
+                    x = obj.x + obj.width;
+                    dx = 6.5;
+                } else {
+                    x = obj.x;
+                    dx = -6.5;
+                }
+                projectiles.push(new_projectile(x, obj.y + obj.height / 2, dx, 0));
+                obj.cooldown_frame = frameno + 30;
+            }
+        }
+    };
+    var new_sniper = function() {
+        return {
+            'x': 0,
+            'y': 0,
+            'xspeed': 0,
+            'yspeed': 0,
+            'height': 16,
+            'width': 12,
+            'dead': false,
+            'ai': sniper_ai,
+            'health': 1,
+            'kill': monster_kill,
+            'cooldown_frame': 0,
+        };
+    };
+
+    monsters.push(spawn(new_sniper()));
+    monsters.push(spawn(new_sniper()));
+    monsters.push(spawn(new_sniper()));
 
     var monster_spawn_frame = 0;
     var maybe_spawn_monsters = function() {
         if (monster_spawn_frame <= frameno) {
             constructors = [ new_dork ];
             if (frameno > 1800) {
+                constructors.push(new_sniper);
                 constructors.push(new_goomba);
             }
             if (frameno > 3600) {
